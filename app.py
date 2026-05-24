@@ -60,7 +60,8 @@ COL_LABELS = {
     "espn_rank": "ESPN Rank", "consensus_rank": "Consensus Rank",
 }
 
-PCT_COLS = {"target_share", "air_yards_share", "catch_rate", "comp_pct", "avg_snap_pct", "pass_rate", "run_rate"}
+PCT_COLS = {"target_share", "air_yards_share", "catch_rate", "comp_pct", "avg_snap_pct",
+            "pass_rate", "run_rate", "opportunity_share", "rz_pass_rate", "rz_run_rate", "rz_conversion_rate"}
 
 @st.cache_data
 def load_year(year):
@@ -77,8 +78,11 @@ def load_year(year):
 @st.cache_data
 def load_2026():
     base = os.path.join(DATA_DIR, "2026")
-    path = os.path.join(base, "master_rankings.csv")
-    return pd.read_csv(path, index_col=0) if os.path.exists(path) else pd.DataFrame()
+    master_path = os.path.join(base, "master_rankings.csv")
+    sos_path    = os.path.join(base, "sos_2026.csv")
+    master = pd.read_csv(master_path, index_col=0) if os.path.exists(master_path) else pd.DataFrame()
+    sos    = pd.read_csv(sos_path) if os.path.exists(sos_path) else pd.DataFrame()
+    return master, sos
 
 def pct_fmt(val):
     return "—" if pd.isna(val) else f"{val:.1%}"
@@ -144,7 +148,7 @@ with col_s:
 show_2026 = season == "2026 RANKINGS"
 
 if show_2026:
-    master = load_2026()
+    master, sos_2026 = load_2026()
     st.markdown('<div class="season-badge">SZN_2026 · PREDICTIVE RANKINGS</div>', unsafe_allow_html=True)
 else:
     data = load_year(season)
@@ -166,7 +170,7 @@ if show_2026:
     rank_cols     = [c for c in ["consensus_rank","fc_rank","ffc_rank","fp_rank","espn_rank"] if not master.empty and c in master.columns]
     pos_rank_cols = [c for c in ["consensus_rank","fc_pos_rank","fp_pos_rank"] if not master.empty and c in master.columns]
 
-    tabs = st.tabs(["⬡  OVERALL", "⬡  QB", "⬡  RB", "⬡  WR", "⬡  TE", "⬡  SOURCE COMPARE"])
+    tabs = st.tabs(["⬡  OVERALL", "⬡  QB", "⬡  RB", "⬡  WR", "⬡  TE", "⬡  SOS 2026", "⬡  SOURCE COMPARE"])
 
     with tabs[0]:
         st.markdown('<div class="section-label">// 2026 CONSENSUS RANKINGS · PPR · ALL POSITIONS</div>', unsafe_allow_html=True)
@@ -196,6 +200,40 @@ if show_2026:
                                 sort_col=sort_opt, ascending=(asc == "↑ Low→High (best rank)"))
 
     with tabs[5]:
+        st.markdown('<div class="section-label">// 2026 STRENGTH OF SCHEDULE · BASED ON 2025 DEFENSIVE RANKINGS</div>', unsafe_allow_html=True)
+        if not sos_2026.empty:
+            pos_f = st.selectbox("POSITION", ["RB","WR","QB","TE"], key="sos26_pos")
+            sos_f = sos_2026[sos_2026["position"] == pos_f].copy()
+            sos_f = sos_f.sort_values("sos_2026_rank").reset_index(drop=True)
+
+            DIFF_COLORS = {"EASY": "#00ff88", "BELOW AVG": "#88ff00", "ABOVE AVG": "#ffaa00", "HARD": "#ff4444"}
+
+            c1, c2 = st.columns(2)
+            with c1:
+                st.markdown(f"**Easiest {pos_f} Schedules** (face weakest defenses)")
+                easy = sos_f.head(8)[["team","avg_opp_pts_allowed","sos_2026_rank","difficulty","games_rated"]]
+                st.dataframe(easy.rename(columns={
+                    "team":"Team","avg_opp_pts_allowed":"Avg Pts Allowed vs Pos",
+                    "sos_2026_rank":"SOS Rank","difficulty":"Difficulty","games_rated":"Games Rated"
+                }), use_container_width=True, hide_index=True)
+            with c2:
+                st.markdown(f"**Hardest {pos_f} Schedules** (face strongest defenses)")
+                hard = sos_f.tail(8).sort_values("sos_2026_rank", ascending=False)[["team","avg_opp_pts_allowed","sos_2026_rank","difficulty","games_rated"]]
+                st.dataframe(hard.rename(columns={
+                    "team":"Team","avg_opp_pts_allowed":"Avg Pts Allowed vs Pos",
+                    "sos_2026_rank":"SOS Rank","difficulty":"Difficulty","games_rated":"Games Rated"
+                }), use_container_width=True, hide_index=True)
+
+            st.markdown('<div class="section-label" style="margin-top:1.5rem">// ALL TEAMS</div>', unsafe_allow_html=True)
+            st.dataframe(sos_f.rename(columns={
+                "team":"Team","avg_opp_pts_allowed":"Avg Pts Allowed vs Pos",
+                "sos_2026_rank":"SOS Rank","difficulty":"Difficulty","games_rated":"Games Rated"
+            }), use_container_width=True, hide_index=True)
+            st.caption("// Based on 2025 pts allowed per defense · Higher avg pts allowed = easier matchup")
+        else:
+            st.warning("Run fetch_sos_2026.py to generate 2026 SOS data.")
+
+    with tabs[6]:
         st.markdown('<div class="section-label">// SOURCE COMPARISON · WHERE EXPERTS AGREE & DISAGREE</div>', unsafe_allow_html=True)
         if not master.empty:
             pos_f = st.selectbox("POSITION", ["ALL", "QB", "RB", "WR", "TE"], key="src_pos")
