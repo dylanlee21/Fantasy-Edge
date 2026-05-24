@@ -199,6 +199,18 @@ for name, df in {"fantasycalc": fc, "ffc_adp": ffc, "fantasypros": fp, "espn": e
         df.to_csv(os.path.join(OUTPUT_DIR, f"{name}.csv"), index=False)
         print(f"   💾 Saved {name}")
 
+# ── LOAD ROTOBALLER (manually entered) ───────────────────────────────────────
+def load_rotoballer():
+    path = os.path.join(OUTPUT_DIR, "rotoballer.csv")
+    if os.path.exists(path):
+        df = pd.read_csv(path)
+        print(f"   ✅ RotoBaller: {len(df)} players loaded from CSV")
+        return df
+    print("   ⚠️ RotoBaller CSV not found — run create_rotoballer.py first")
+    return pd.DataFrame()
+
+rb_data = load_rotoballer()
+
 # ── MASTER TABLE ──────────────────────────────────────────────────────────────
 print("\n🔧 Building master rankings table...")
 
@@ -212,6 +224,8 @@ if not fc.empty:
         master = master.merge(fp[["player", "fp_rank", "fp_pos_rank", "fp_best", "fp_worst", "fp_stdev"]], on="player", how="left")
     if not espn.empty:
         master = master.merge(espn[["player", "espn_rank"]], on="player", how="left")
+    if not rb_data.empty:
+        master = master.merge(rb_data[["player", "rb_overall_rank", "rb_pos_rank"]], on="player", how="left")
 
     # Add 2025 FPPG from our pipeline data for context
     try:
@@ -232,7 +246,7 @@ if not fc.empty:
     master = master.drop_duplicates("player", keep="first")
 
     # Consensus rank — average only external sources
-    rank_cols = [c for c in ["fc_rank", "ffc_rank", "fp_rank", "espn_rank"] if c in master.columns]
+    rank_cols = [c for c in ["fc_rank", "ffc_rank", "fp_rank", "espn_rank", "rb_overall_rank"] if c in master.columns]
     master["consensus_rank"] = master[rank_cols].mean(axis=1).round(1)
     master = master.sort_values("consensus_rank").reset_index(drop=True)
     master.index += 1

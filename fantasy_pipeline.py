@@ -1,8 +1,9 @@
 """
 fantasy_pipeline.py
 ====================
-2024 data: nfl-data-py (archived but works for 2024)
-2025 data: nflreadpy (the new replacement package)
+2024 data: nfl-data-py
+2025 data: nflreadpy
+Includes PBP-derived stats: red zone targets, goal line usage, opportunity share
 """
 
 import pandas as pd
@@ -13,7 +14,86 @@ OUTPUT_DIR = "data"
 def safe_div(a, b, decimals=2):
     return (a / b.where(b != 0)).round(decimals)
 
-def compute_and_save(weekly_raw, snaps_raw, year):
+def compute_pbp_stats(pbp_raw, year):
+    """Extract red zone and goal line stats from play-by-play data."""
+    print(f"   📊 Processing PBP for red zone stats...")
+    try:
+        pbp = pbp_raw[pbp_raw["season_type"] == "REG"].copy()
+
+        # Ensure required columns exist
+        required = ["yardline_100", "posteam", "pass_attempt", "rush_attempt",
+                    "touchdown", "receiver_player_name", "rusher_player_name"]
+        missing = [c for c in required if c not in pbp.columns]
+        if missing:
+            print(f"   ⚠️ PBP missing columns: {missing}")
+            return {}, {}
+
+        pbp["yardline_100"] = pd.to_numeric(pbp["yardline_100"], errors="coerce")
+        pbp["pass_attempt"] = pd.to_numeric(pbp["pass_attempt"], errors="coerce").fillna(0)
+        pbp["rush_attempt"] = pd.to_numeric(pbp["rush_attempt"], errors="coerce").fillna(0)
+        pbp["touchdown"]    = pd.to_numeric(pbp["touchdown"], errors="coerce").fillna(0)
+
+        rz  = pbp[pbp["yardline_100"] <= 20]   # red zone
+        gl  = pbp[pbp["yardline_100"] <= 5]    # goal line
+
+        # ── PLAYER STATS ─────────────────────────────────────────────────────
+        player_stats = {}
+
+        # Red zone targets (WR/TE)
+        rz_pass = rz[rz["pass_attempt"] == 1]
+        rz_tgts = rz_pass.groupby("receiver_player_name").size().reset_index(name="rz_targets")
+        rz_tgts = rz_tgts.rename(columns={"receiver_player_name": "player_display_name"})
+
+        # Goal line carries (RB)
+        gl_rush = gl[gl["rush_attempt"] == 1]
+        gl_carries = gl_rush.groupby("rusher_player_name").size().reset_index(name="gl_carries")
+        gl_carries = gl_carries.rename(columns={"rusher_player_name": "player_display_name"})
+
+        # Goal line targets (RB)
+        gl_pass = gl[gl["pass_attempt"] == 1]
+        gl_tgts = gl_pass.groupby("receiver_player_name").size().reset_index(name="gl_targets")
+        gl_tgts = gl_tgts.rename(columns={"receiver_player_name": "player_display_name"})
+
+        player_stats["rz_targets"]  = rz_tgts
+        player_stats["gl_carries"]  = gl_carries
+        player_stats["gl_targets"]  = gl_tgts
+
+        # ── TEAM STATS ───────────────────────────────────────────────────────
+        team_stats = {}
+
+        # Red zone pass/run rate
+        rz_plays = rz[(rz["pass_attempt"] == 1) | (rz["rush_attempt"] == 1)]
+        rz_team = rz_plays.groupby("posteam").agg(
+            rz_pass_plays=("pass_attempt", "sum"),
+            rz_rush_plays=("rush_attempt", "sum"),
+            rz_total_plays=("pass_attempt", "count"),
+        ).reset_index()
+        rz_team["rz_pass_rate"] = safe_div(rz_team["rz_pass_plays"], rz_team["rz_total_plays"], 3)
+        rz_team["rz_run_rate"]  = safe_div(rz_team["rz_rush_plays"],  rz_team["rz_total_plays"], 3)
+
+        # Red zone conversion rate (TD per red zone trip)
+        # A red zone trip = first play inside 20 with a new drive sequence
+        rz_tds = rz[rz["touchdown"] == 1].groupby("posteam").size().reset_index(name="rz_tds")
+        rz_total = rz_plays.groupby("posteam").size().reset_index(name="rz_plays")
+        rz_conv = rz_tds.merge(rz_total, on="posteam", how="outer").fillna(0)
+        rz_conv["rz_conversion_rate"] = safe_div(rz_conv["rz_tds"], rz_conv["rz_plays"], 3)
+
+        rz_team = rz_team.merge(rz_conv[["posteam","rz_tds","rz_conversion_rate"]], on="posteam", how="left")
+        rz_team = rz_team.rename(columns={"posteam": "team"})
+
+        team_stats["rz_team"] = rz_team
+
+        print(f"   ✅ PBP stats computed")
+        return player_stats, team_stats
+
+    except Exception as e:
+        import traceback
+        print(f"   ❌ PBP stats failed: {e}")
+        traceback.print_exc()
+        return {}, {}
+
+
+def compute_and_save(weekly_raw, snaps_raw, year, pbp_raw=None):
     print(f"\n{'='*50}")
     print(f"  PROCESSING {year} SEASON")
     print(f"{'='*50}")
@@ -21,11 +101,14 @@ def compute_and_save(weekly_raw, snaps_raw, year):
     year_dir = os.path.join(OUTPUT_DIR, str(year))
     os.makedirs(year_dir, exist_ok=True)
 
-    # Regular season only
     weekly = weekly_raw[weekly_raw["season_type"] == "REG"].copy()
     snaps  = snaps_raw[snaps_raw["game_type"] == "REG"].copy() if "game_type" in snaps_raw.columns else snaps_raw.copy()
-
     print(f"   {len(weekly)} rows · weeks {weekly['week'].min()}–{weekly['week'].max()}")
+
+    # ── PBP STATS ─────────────────────────────────────────────────────────────
+    player_pbp, team_pbp = {}, {}
+    if pbp_raw is not None:
+        player_pbp, team_pbp = compute_pbp_stats(pbp_raw, year)
 
     # ── AGGREGATION ───────────────────────────────────────────────────────────
     agg_dict = {
@@ -58,21 +141,33 @@ def compute_and_save(weekly_raw, snaps_raw, year):
             break
 
     valid_agg = {k: v for k, v in agg_dict.items() if v[0] in weekly.columns}
-
-    # Find name column (varies between packages)
     name_col = next((c for c in ["player_display_name", "player_name"] if c in weekly.columns), None)
     if name_col is None:
         print("❌ Could not find player name column")
         return
 
-    group_cols = ["player_id", name_col, "position", "recent_team"]
-    group_cols = [c for c in group_cols if c in weekly.columns]
-
+    group_cols = [c for c in ["player_id", name_col, "position", "recent_team"] if c in weekly.columns]
     agg = weekly.groupby(group_cols).agg(**valid_agg).reset_index()
-
-    # Normalize name column
     if name_col != "player_display_name":
         agg = agg.rename(columns={name_col: "player_display_name"})
+
+    # ── OPPORTUNITY SHARE ─────────────────────────────────────────────────────
+    # Compute from weekly data: (carries + targets) / team total per week
+    if "carries" in weekly.columns and "targets" in weekly.columns:
+        wk = weekly.copy()
+        team_col = "recent_team" if "recent_team" in wk.columns else None
+        if team_col:
+            wk["opportunities"] = wk["carries"].fillna(0) + wk["targets"].fillna(0)
+            team_opp = wk.groupby([team_col, "week"])["opportunities"].sum().reset_index()
+            team_opp = team_opp.rename(columns={"opportunities": "team_opp"})
+            wk = wk.merge(team_opp, on=[team_col, "week"], how="left")
+            wk["opp_share_wk"] = wk["opportunities"] / wk["team_opp"].replace(0, float("nan"))
+
+            name_wk = name_col if name_col in wk.columns else "player_display_name"
+            opp_share = wk.groupby(name_wk)["opp_share_wk"].mean().reset_index()
+            opp_share.columns = ["player_display_name", "opportunity_share"]
+            opp_share["opportunity_share"] = opp_share["opportunity_share"].round(3)
+            agg = agg.merge(opp_share, on="player_display_name", how="left")
 
     # ── SNAP % ────────────────────────────────────────────────────────────────
     if "offense_pct" in snaps.columns and "player" in snaps.columns and "team" in snaps.columns:
@@ -83,6 +178,14 @@ def compute_and_save(weekly_raw, snaps_raw, year):
             .rename(columns={"player": "player_display_name", "team": "recent_team"})
         )
         agg = agg.merge(snap_by_name, on=["player_display_name", "recent_team"], how="left")
+
+    # ── MERGE PBP PLAYER STATS ────────────────────────────────────────────────
+    if player_pbp.get("rz_targets") is not None:
+        agg = agg.merge(player_pbp["rz_targets"], on="player_display_name", how="left")
+    if player_pbp.get("gl_carries") is not None:
+        agg = agg.merge(player_pbp["gl_carries"], on="player_display_name", how="left")
+    if player_pbp.get("gl_targets") is not None:
+        agg = agg.merge(player_pbp["gl_targets"], on="player_display_name", how="left")
 
     # ── DERIVED METRICS ───────────────────────────────────────────────────────
     if "rushing_yards" in agg.columns and "carries" in agg.columns:
@@ -130,27 +233,32 @@ def compute_and_save(weekly_raw, snaps_raw, year):
     team_pass["total_plays"] = team_pass["pass_attempts"] + team_pass["rush_attempts"]
     team_pass["pass_rate"] = safe_div(team_pass["pass_attempts"], team_pass["total_plays"], 3)
     team_pass["run_rate"]  = safe_div(team_pass["rush_attempts"],  team_pass["total_plays"], 3)
-    team_pass.rename(columns={"recent_team": "team"}).sort_values("pass_rate", ascending=False).to_csv(
-        os.path.join(year_dir, "team_splits.csv"), index=False
-    )
+    team_splits = team_pass.rename(columns={"recent_team": "team"}).sort_values("pass_rate", ascending=False)
+
+    # Merge red zone team stats if available
+    if team_pbp.get("rz_team") is not None:
+        team_splits = team_splits.merge(team_pbp["rz_team"], on="team", how="left")
+
+    team_splits.to_csv(os.path.join(year_dir, "team_splits.csv"), index=False)
     print(f"   ✅ Team splits saved")
 
     # ── EXPORT BY POSITION ────────────────────────────────────────────────────
     POSITION_COLS = {
-        "QB": ["player_display_name","recent_team","games","passing_yards","passing_tds",
-               "interceptions","comp_pct","yards_per_attempt","td_rate","sacks",
-               "carries","rushing_yards","rushing_tds","fppg","fppg_ppr"],
-        "RB": ["player_display_name","recent_team","games","carries","rushing_yards",
-               "rushing_tds","ypc","targets","receptions","receiving_yards","receiving_tds",
-               "target_share","catch_rate","yac_per_rec","avg_snap_pct","fppg","fppg_ppr"],
-        "WR": ["player_display_name","recent_team","games","targets","receptions",
-               "receiving_yards","receiving_tds","target_share","air_yards_share",
-               "wopr","racr","adot","catch_rate","yards_per_target","yac_per_rec",
-               "avg_snap_pct","fppg","fppg_ppr"],
-        "TE": ["player_display_name","recent_team","games","targets","receptions",
-               "receiving_yards","receiving_tds","target_share","air_yards_share",
-               "wopr","racr","adot","catch_rate","yards_per_target","avg_snap_pct",
-               "fppg","fppg_ppr"],
+        "QB": ["player_display_name","recent_team","games","fantasy_points_ppr","fppg_ppr",
+               "passing_yards","passing_tds","interceptions","comp_pct","yards_per_attempt",
+               "td_rate","sacks","carries","rushing_yards","rushing_tds","fppg"],
+        "RB": ["player_display_name","recent_team","games","fantasy_points_ppr","fppg_ppr",
+               "carries","rushing_yards","rushing_tds","ypc","targets","receptions",
+               "receiving_yards","receiving_tds","target_share","opportunity_share",
+               "gl_carries","gl_targets","catch_rate","yac_per_rec","avg_snap_pct"],
+        "WR": ["player_display_name","recent_team","games","fantasy_points_ppr","fppg_ppr",
+               "targets","receptions","receiving_yards","receiving_tds","rz_targets",
+               "target_share","air_yards_share","wopr","racr","adot","catch_rate",
+               "yards_per_target","yac_per_rec","avg_snap_pct"],
+        "TE": ["player_display_name","recent_team","games","fantasy_points_ppr","fppg_ppr",
+               "targets","receptions","receiving_yards","receiving_tds","rz_targets",
+               "target_share","air_yards_share","wopr","racr","adot","catch_rate",
+               "yards_per_target","avg_snap_pct"],
     }
     MIN_GAMES = {"QB": 5, "RB": 3, "WR": 3, "TE": 3}
 
@@ -172,44 +280,50 @@ print("📦 Loading 2024 data via nfl-data-py...")
 import nfl_data_py as nfl_old
 weekly_2024 = nfl_old.import_weekly_data([2024])
 snaps_2024  = nfl_old.import_snap_counts([2024])
-compute_and_save(weekly_2024, snaps_2024, 2024)
+
+print("📥 Loading 2024 PBP data...")
+try:
+    pbp_2024 = nfl_old.import_pbp_data([2024], columns=[
+        "season_type","yardline_100","posteam","pass_attempt","rush_attempt",
+        "touchdown","receiver_player_name","rusher_player_name","play_type"
+    ])
+    print(f"   ✅ PBP 2024: {len(pbp_2024)} plays")
+except Exception as e:
+    print(f"   ⚠️ PBP 2024 unavailable: {e}")
+    pbp_2024 = None
+
+compute_and_save(weekly_2024, snaps_2024, 2024, pbp_2024)
 
 # ── 2025 via nflreadpy ────────────────────────────────────────────────────────
 print("\n📦 Loading 2025 data via nflreadpy...")
 try:
     import nflreadpy as nfl_new
     weekly_2025 = nfl_new.load_player_stats([2025]).to_pandas()
-    print(f"   2025 weekly columns: {list(weekly_2025.columns[:20])}...")
-
-    # nflreadpy uses different column names — normalize to match nfl-data-py
     col_renames = {
-        "team":                  "recent_team",
-        "passing_interceptions": "interceptions",
-        "sacks_suffered":        "sacks",
-        "rushing_attempts":      "carries",
-        "receiving_targets":     "targets",
-        "receiving_receptions":  "receptions",
+        "team": "recent_team", "passing_interceptions": "interceptions",
+        "sacks_suffered": "sacks", "rushing_attempts": "carries",
+        "receiving_targets": "targets", "receiving_receptions": "receptions",
     }
     weekly_2025 = weekly_2025.rename(columns={k: v for k, v in col_renames.items() if k in weekly_2025.columns})
-
-    # Drop duplicate columns if any caused by renaming
     weekly_2025 = weekly_2025.loc[:, ~weekly_2025.columns.duplicated()]
-
-    # Add PPR points if missing
     if "fantasy_points_ppr" not in weekly_2025.columns and "fantasy_points" in weekly_2025.columns:
         rec = weekly_2025["receptions"] if "receptions" in weekly_2025.columns else 0
         weekly_2025["fantasy_points_ppr"] = weekly_2025["fantasy_points"] + rec * 0.5
 
-    print(f"   Normalized columns: {list(weekly_2025.columns[:20])}...")
-
-    # Load snap counts for 2025
     try:
         snaps_2025 = nfl_new.load_snap_counts([2025]).to_pandas()
-    except Exception as snap_err:
-        print(f"   snap counts unavailable: {snap_err}")
+    except Exception:
         snaps_2025 = pd.DataFrame()
 
-    compute_and_save(weekly_2025, snaps_2025, 2025)
+    print("📥 Loading 2025 PBP data...")
+    try:
+        pbp_2025 = nfl_new.load_pbp([2025]).to_pandas()
+        print(f"   ✅ PBP 2025: {len(pbp_2025)} plays")
+    except Exception as e:
+        print(f"   ⚠️ PBP 2025 unavailable: {e}")
+        pbp_2025 = None
+
+    compute_and_save(weekly_2025, snaps_2025, 2025, pbp_2025)
 
 except Exception as e:
     import traceback

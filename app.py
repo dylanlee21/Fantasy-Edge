@@ -38,7 +38,7 @@ DATA_DIR = "data"
 COL_LABELS = {
     "player_display_name": "Player", "recent_team": "Team", "games": "GP",
     "fppg": "FPPG", "fppg_ppr": "FPPG (PPR)", "fantasy_points": "Total Pts",
-    "fantasy_points_ppr": "Total Pts (PPR)", "passing_yards": "Pass Yds",
+    "fantasy_points_ppr": "Total PPR Pts", "passing_yards": "Pass Yds",
     "passing_tds": "Pass TD", "interceptions": "INT", "comp_pct": "Comp%",
     "yards_per_attempt": "Y/A", "td_rate": "TD Rate", "sacks": "Sacks",
     "carries": "Car", "rushing_yards": "Rush Yds", "rushing_tds": "Rush TD",
@@ -58,6 +58,7 @@ COL_LABELS = {
     "fp_rank": "FantasyPros Rank", "fp_pos_rank": "FP Pos Rank",
     "fp_best": "FP Best", "fp_worst": "FP Worst", "fp_stdev": "FP StDev",
     "espn_rank": "ESPN Rank", "consensus_rank": "Consensus Rank",
+    "rb_overall_rank": "RotoBaller Rank", "rb_pos_rank": "RotoBaller Pos Rank",
 }
 
 PCT_COLS = {"target_share", "air_yards_share", "catch_rate", "comp_pct", "avg_snap_pct",
@@ -167,8 +168,8 @@ if not show_2026:
 
 # ── 2026 VIEW ─────────────────────────────────────────────────────────────────
 if show_2026:
-    rank_cols     = [c for c in ["consensus_rank","fc_rank","ffc_rank","fp_rank","espn_rank"] if not master.empty and c in master.columns]
-    pos_rank_cols = [c for c in ["consensus_rank","fc_pos_rank","fp_pos_rank"] if not master.empty and c in master.columns]
+    rank_cols     = [c for c in ["consensus_rank","fc_rank","ffc_rank","fp_rank","espn_rank","rb_overall_rank"] if not master.empty and c in master.columns]
+    pos_rank_cols = [c for c in ["consensus_rank","fc_pos_rank","fp_pos_rank","rb_pos_rank"] if not master.empty and c in master.columns]
 
     tabs = st.tabs(["⬡  OVERALL", "⬡  QB", "⬡  RB", "⬡  WR", "⬡  TE", "⬡  SOS 2026", "⬡  SOURCE COMPARE"])
 
@@ -238,7 +239,7 @@ if show_2026:
         if not master.empty:
             pos_f = st.selectbox("POSITION", ["ALL", "QB", "RB", "WR", "TE"], key="src_pos")
             df_src = master.copy() if pos_f == "ALL" else master[master["position"] == pos_f].copy()
-            ext_cols = [c for c in ["fc_rank","ffc_rank","fp_rank","espn_rank"] if c in df_src.columns and df_src[c].notna().sum() > 3]
+            ext_cols = [c for c in ["fc_rank","ffc_rank","fp_rank","espn_rank","rb_overall_rank"] if c in df_src.columns and df_src[c].notna().sum() > 3]
             if ext_cols:
                 st.markdown("**Sources:** " + " · ".join([COL_LABELS.get(c, c) for c in ext_cols]))
                 df_src["rank_stdev"] = df_src[ext_cols].std(axis=1).round(1)
