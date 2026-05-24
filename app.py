@@ -213,23 +213,23 @@ if show_2026:
                 st.markdown(f"**Easiest {pos_f} Schedules** (face weakest defenses)")
                 easy = sos_f.head(8)[["team","avg_opp_pts_allowed","sos_2026_rank","difficulty","games_rated"]]
                 st.dataframe(easy.rename(columns={
-                    "team":"Team","avg_opp_pts_allowed":"Avg Pts Allowed vs Pos",
+                    "team":"Team","avg_opp_pts_allowed":"Avg PPR Pts Allowed vs Position",
                     "sos_2026_rank":"SOS Rank","difficulty":"Difficulty","games_rated":"Games Rated"
                 }), use_container_width=True, hide_index=True)
             with c2:
                 st.markdown(f"**Hardest {pos_f} Schedules** (face strongest defenses)")
                 hard = sos_f.tail(8).sort_values("sos_2026_rank", ascending=False)[["team","avg_opp_pts_allowed","sos_2026_rank","difficulty","games_rated"]]
                 st.dataframe(hard.rename(columns={
-                    "team":"Team","avg_opp_pts_allowed":"Avg Pts Allowed vs Pos",
+                    "team":"Team","avg_opp_pts_allowed":"Avg PPR Pts Allowed vs Position",
                     "sos_2026_rank":"SOS Rank","difficulty":"Difficulty","games_rated":"Games Rated"
                 }), use_container_width=True, hide_index=True)
 
             st.markdown('<div class="section-label" style="margin-top:1.5rem">// ALL TEAMS</div>', unsafe_allow_html=True)
             st.dataframe(sos_f.rename(columns={
-                "team":"Team","avg_opp_pts_allowed":"Avg Pts Allowed vs Pos",
+                "team":"Team","avg_opp_pts_allowed":"Avg PPR Pts Allowed vs Position",
                 "sos_2026_rank":"SOS Rank","difficulty":"Difficulty","games_rated":"Games Rated"
             }), use_container_width=True, hide_index=True)
-            st.caption("// Based on 2025 pts allowed per defense · Higher avg pts allowed = easier matchup")
+            st.caption("// Avg PPR fantasy pts allowed by each opponent defense vs that position in 2025 · Higher = easier schedule")
         else:
             st.warning("Run fetch_sos_2026.py to generate 2026 SOS data.")
 
