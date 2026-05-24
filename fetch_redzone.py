@@ -128,6 +128,10 @@ def extract_and_patch(year):
             df = df.merge(rz_tgts, on="player_display_name", how="left")
             df["rz_targets"] = df["rz_targets"].fillna(0).astype(int)
 
+        # Ensure rank index starts at 1
+        df = df.reset_index(drop=True)
+        df.index += 1
+        df.index.name = "rank"
         df.to_csv(path)
         print(f"   ✅ {pos} {year} patched → {path}")
 
