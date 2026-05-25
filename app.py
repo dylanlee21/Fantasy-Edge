@@ -81,9 +81,11 @@ def load_2026():
     base = os.path.join(DATA_DIR, "2026")
     master_path = os.path.join(base, "master_rankings.csv")
     sos_path    = os.path.join(base, "sos_2026.csv")
+    mock_path   = os.path.join(base, "mock_board.csv")
     master = pd.read_csv(master_path, index_col=0) if os.path.exists(master_path) else pd.DataFrame()
     sos    = pd.read_csv(sos_path) if os.path.exists(sos_path) else pd.DataFrame()
-    return master, sos
+    mock   = pd.read_csv(mock_path) if os.path.exists(mock_path) else pd.DataFrame()
+    return master, sos, mock
 
 def pct_fmt(val):
     return "—" if pd.isna(val) else f"{val:.1%}"
@@ -95,12 +97,14 @@ def show_table(df, search_query="", sort_col=None, ascending=False):
     if df.empty:
         st.warning("No data found. Run fantasy_pipeline.py first.")
         return
+    df = df.copy()
     if search_query:
         mask = df.apply(lambda col: col.astype(str).str.contains(search_query, case=False)).any(axis=1)
         df = df[mask]
+    # Sort BEFORE converting pct columns to strings
     if sort_col and sort_col in df.columns:
-        df = df.sort_values(sort_col, ascending=ascending)
-    df = df.copy()
+        df = df.sort_values(sort_col, ascending=ascending, key=lambda x: pd.to_numeric(x, errors="coerce"))
+    # Now format pct columns as strings for display
     for c in PCT_COLS:
         if c in df.columns:
             df[c] = df[c].apply(pct_fmt)
@@ -149,7 +153,7 @@ with col_s:
 show_2026 = season == "2026 RANKINGS"
 
 if show_2026:
-    master, sos_2026 = load_2026()
+    master, sos_2026, mock_board = load_2026()
     st.markdown('<div class="season-badge">SZN_2026 · PREDICTIVE RANKINGS</div>', unsafe_allow_html=True)
 else:
     data = load_year(season)
@@ -171,7 +175,7 @@ if show_2026:
     rank_cols     = [c for c in ["consensus_rank","fc_rank","ffc_rank","fp_rank","espn_rank","rb_overall_rank"] if not master.empty and c in master.columns]
     pos_rank_cols = [c for c in ["consensus_rank","fc_pos_rank","fp_pos_rank","rb_pos_rank"] if not master.empty and c in master.columns]
 
-    tabs = st.tabs(["⬡  OVERALL", "⬡  QB", "⬡  RB", "⬡  WR", "⬡  TE", "⬡  SOS 2026", "⬡  SOURCE COMPARE"])
+    tabs = st.tabs(["⬡  OVERALL", "⬡  QB", "⬡  RB", "⬡  WR", "⬡  TE", "⬡  SOS 2026", "⬡  MOCK BOARD", "⬡  SOURCE COMPARE"])
 
     with tabs[0]:
         st.markdown('<div class="section-label">// 2026 CONSENSUS RANKINGS · PPR · ALL POSITIONS</div>', unsafe_allow_html=True)
@@ -235,6 +239,47 @@ if show_2026:
             st.warning("Run fetch_sos_2026.py to generate 2026 SOS data.")
 
     with tabs[6]:
+        st.markdown('<div class="section-label">// 2026 ESPN MOCK DRAFT BOARD · 12-TEAM PPR · ADP ORDER</div>', unsafe_allow_html=True)
+        if not mock_board.empty:
+            pos_options = ["ALL", "QB", "RB", "WR", "TE", "K", "DST"]
+            c1, c2 = st.columns([2, 1])
+            with c1:
+                mock_search = st.text_input("🔍  SEARCH PLAYER", key="mock_search", placeholder="e.g. Josh Allen, CMC...")
+            with c2:
+                mock_pos = st.selectbox("FILTER BY POSITION", pos_options, key="mock_pos")
+
+            mb = mock_board.copy()
+            mb["pick_label"] = mb.apply(lambda r: f"{int(r['round'])}.{int(r['pick_in_round']):02d}", axis=1)
+            if mock_pos != "ALL":
+                mb = mb[mb["position"] == mock_pos]
+            if mock_search:
+                mask = mb.apply(lambda col: col.astype(str).str.contains(mock_search, case=False)).any(axis=1)
+                mb = mb[mask]
+
+            # Color code by position
+            POS_COLORS = {
+                "QB": "#4fc3f7", "RB": "#81c784", "WR": "#ff8a65",
+                "TE": "#ce93d8", "K": "#fff176", "DST": "#90a4ae",
+            }
+
+            def style_pos(val):
+                color = POS_COLORS.get(val, "#c8d6e0")
+                return f"color: {color}; font-weight: bold;"
+
+            display = mb[["pick_label","player","position","team"]].rename(columns={
+                "pick_label": "Pick", "player": "Player",
+                "position": "Pos", "team": "Team"
+            })
+
+            st.dataframe(
+                display.style.map(style_pos, subset=["Pos"]),
+                use_container_width=True, height=700, hide_index=True
+            )
+            st.caption(f"// {len(mb)} players shown · ESPN Mock Draft 10-team PPR · formatted as 12-team")
+        else:
+            st.warning("Run create_mock_board.py to generate the mock board.")
+
+    with tabs[7]:
         st.markdown('<div class="section-label">// SOURCE COMPARISON · WHERE EXPERTS AGREE & DISAGREE</div>', unsafe_allow_html=True)
         if not master.empty:
             pos_f = st.selectbox("POSITION", ["ALL", "QB", "RB", "WR", "TE"], key="src_pos")
