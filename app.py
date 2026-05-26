@@ -187,7 +187,7 @@ if show_2026:
     rank_cols     = [c for c in ["consensus_rank","fc_rank","ffc_rank","fp_rank","espn_rank","rb_overall_rank","yahoo_rank"] if not master.empty and c in master.columns]
     pos_rank_cols = [c for c in ["consensus_rank","fc_pos_rank","fp_pos_rank","rb_pos_rank","yahoo_pos_rank"] if not master.empty and c in master.columns]
 
-    tabs = st.tabs(["⬡  OVERALL", "⬡  QB", "⬡  RB", "⬡  WR", "⬡  TE", "⬡  SOS 2026", "⬡  MOCK BOARD", "⬡  SOURCE COMPARE"])
+    tabs = st.tabs(["⬡  OVERALL", "⬡  QB", "⬡  RB", "⬡  WR", "⬡  TE", "⬡  SOS 2026", "⬡  MOCK BOARD", "⬡  DRAFT NOTES", "⬡  SOURCE COMPARE"])
 
     with tabs[0]:
         st.markdown('<div class="section-label">// 2026 CONSENSUS RANKINGS · PPR · ALL POSITIONS</div>', unsafe_allow_html=True)
@@ -292,6 +292,57 @@ if show_2026:
             st.warning("Run create_mock_board.py to generate the mock board.")
 
     with tabs[7]:
+        st.markdown('<div class="section-label">// DRAFT NOTES · 2026 SEASON</div>', unsafe_allow_html=True)
+
+        MUST_DRAFT = {
+            "Early Round Must Draft (1-3)": [
+                "Omarion Hampton", "Ashton Jeanty", "Justin Jefferson",
+                "Malik Nabers", "Chase Brown", "James Cook III", "Brock Bowers",
+            ],
+            "Mid Round Must Draft (4-7)": [
+                "Ladd McConkey", "TreVeyon Henderson", "Cam Skattebo",
+                "Christian Watson", "Emeka Egbuka", "Justin Herbert",
+                "Harold Fannin Jr.", "Bhayshul Tuten",
+            ],
+            "Late Round Must Draft (8+)": [
+                "Tucker Kraft", "Josh Downs", "Matthew Golden",
+                "Jadarian Price", "Kyle Monangai",
+            ],
+        }
+
+        MUST_AVOID = {
+            "Early Round Must Avoid (1-3)": [
+                "Trey McBride", "De'Von Achane", "Christian McCaffrey",
+                "Jeremiyah Love", "George Pickens",
+            ],
+            "Mid Round Must Avoid (4-7)": [
+                "Davante Adams", "Tyler Warren", "DJ Moore",
+            ],
+            "Late Round Must Avoid (8+)": [
+                "Dallas Goedert", "Khalil Shakir",
+                "Jacory Croskey-Merritt", "Calvin Ridley",
+            ],
+        }
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.markdown('<div style="font-family:Share Tech Mono,monospace;font-size:0.8rem;color:#00cc44;letter-spacing:0.15em;margin-bottom:1rem;">// MUST DRAFTS</div>', unsafe_allow_html=True)
+            for category, players in MUST_DRAFT.items():
+                st.markdown(f'<div style="font-family:Share Tech Mono,monospace;font-size:0.7rem;color:#7a2a5a;letter-spacing:0.12em;margin-top:1rem;margin-bottom:0.4rem;border-bottom:1px solid #2a0a1a;padding-bottom:0.2rem;">{category.upper()}</div>', unsafe_allow_html=True)
+                for p in players:
+                    st.markdown(f'<div style="padding:0.4rem 0.6rem;margin:0.2rem 0;background:#0a1f0a;border-left:3px solid #00cc44;font-size:0.85rem;color:#c8d6e0;">✦ {p}</div>', unsafe_allow_html=True)
+
+        with col2:
+            st.markdown('<div style="font-family:Share Tech Mono,monospace;font-size:0.8rem;color:#ff3333;letter-spacing:0.15em;margin-bottom:1rem;">// MUST AVOIDS</div>', unsafe_allow_html=True)
+            for category, players in MUST_AVOID.items():
+                st.markdown(f'<div style="font-family:Share Tech Mono,monospace;font-size:0.7rem;color:#7a2a5a;letter-spacing:0.12em;margin-top:1rem;margin-bottom:0.4rem;border-bottom:1px solid #2a0a1a;padding-bottom:0.2rem;">{category.upper()}</div>', unsafe_allow_html=True)
+                for p in players:
+                    st.markdown(f'<div style="padding:0.4rem 0.6rem;margin:0.2rem 0;background:#1f0a0a;border-left:3px solid #ff3333;font-size:0.85rem;color:#c8d6e0;">✗ {p}</div>', unsafe_allow_html=True)
+
+        st.markdown('<div style="font-family:Share Tech Mono,monospace;font-size:0.65rem;color:#7a2a5a;margin-top:1.5rem;">// Numbers in parentheses indicate suggested draft round · PPR scoring</div>', unsafe_allow_html=True)
+
+    with tabs[8]:
         st.markdown('<div class="section-label">// SOURCE COMPARISON · WHERE EXPERTS AGREE & DISAGREE</div>', unsafe_allow_html=True)
         if not master.empty:
             pos_f = st.selectbox("POSITION", ["ALL", "QB", "RB", "WR", "TE"], key="src_pos")
