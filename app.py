@@ -60,6 +60,7 @@ COL_LABELS = {
     "espn_rank": "ESPN Rank", "consensus_rank": "Consensus Rank",
     "rb_overall_rank": "RotoBaller Rank", "rb_pos_rank": "RotoBaller Pos Rank",
     "yahoo_rank": "Yahoo Rank", "yahoo_pos_rank": "Yahoo Pos Rank",
+
 }
 
 PCT_COLS = {"target_share", "air_yards_share", "catch_rate", "comp_pct", "avg_snap_pct",
