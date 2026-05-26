@@ -59,10 +59,21 @@ COL_LABELS = {
     "fp_best": "FP Best", "fp_worst": "FP Worst", "fp_stdev": "FP StDev",
     "espn_rank": "ESPN Rank", "consensus_rank": "Consensus Rank",
     "rb_overall_rank": "RotoBaller Rank", "rb_pos_rank": "RotoBaller Pos Rank",
+    "yahoo_rank": "Yahoo Rank", "yahoo_pos_rank": "Yahoo Pos Rank",
 }
 
 PCT_COLS = {"target_share", "air_yards_share", "catch_rate", "comp_pct", "avg_snap_pct",
             "pass_rate", "run_rate", "opportunity_share", "rz_pass_rate", "rz_run_rate", "rz_conversion_rate"}
+
+@st.cache_data
+def load_player_info():
+    path = os.path.join(DATA_DIR, "player_info.csv")
+    return pd.read_csv(path) if os.path.exists(path) else pd.DataFrame()
+
+@st.cache_data
+def load_gamelogs(year):
+    path = os.path.join(DATA_DIR, f"gamelogs_{year}.csv")
+    return pd.read_csv(path) if os.path.exists(path) else pd.DataFrame()
 
 @st.cache_data
 def load_year(year):
@@ -172,8 +183,8 @@ if not show_2026:
 
 # ── 2026 VIEW ─────────────────────────────────────────────────────────────────
 if show_2026:
-    rank_cols     = [c for c in ["consensus_rank","fc_rank","ffc_rank","fp_rank","espn_rank","rb_overall_rank"] if not master.empty and c in master.columns]
-    pos_rank_cols = [c for c in ["consensus_rank","fc_pos_rank","fp_pos_rank","rb_pos_rank"] if not master.empty and c in master.columns]
+    rank_cols     = [c for c in ["consensus_rank","fc_rank","ffc_rank","fp_rank","espn_rank","rb_overall_rank","yahoo_rank"] if not master.empty and c in master.columns]
+    pos_rank_cols = [c for c in ["consensus_rank","fc_pos_rank","fp_pos_rank","rb_pos_rank","yahoo_pos_rank"] if not master.empty and c in master.columns]
 
     tabs = st.tabs(["⬡  OVERALL", "⬡  QB", "⬡  RB", "⬡  WR", "⬡  TE", "⬡  SOS 2026", "⬡  MOCK BOARD", "⬡  SOURCE COMPARE"])
 
@@ -284,7 +295,7 @@ if show_2026:
         if not master.empty:
             pos_f = st.selectbox("POSITION", ["ALL", "QB", "RB", "WR", "TE"], key="src_pos")
             df_src = master.copy() if pos_f == "ALL" else master[master["position"] == pos_f].copy()
-            ext_cols = [c for c in ["fc_rank","ffc_rank","fp_rank","espn_rank","rb_overall_rank"] if c in df_src.columns and df_src[c].notna().sum() > 3]
+            ext_cols = [c for c in ["fc_rank","ffc_rank","fp_rank","espn_rank","rb_overall_rank","yahoo_rank"] if c in df_src.columns and df_src[c].notna().sum() > 3]
             if ext_cols:
                 st.markdown("**Sources:** " + " · ".join([COL_LABELS.get(c, c) for c in ext_cols]))
                 df_src["rank_stdev"] = df_src[ext_cols].std(axis=1).round(1)
@@ -302,7 +313,7 @@ if show_2026:
 
 # ── 2024 / 2025 VIEW ──────────────────────────────────────────────────────────
 else:
-    tabs = st.tabs(["⬡  QB", "⬡  RB", "⬡  WR", "⬡  TE", "⬡  TEAM SPLITS", "⬡  SOS"])
+    tabs = st.tabs(["⬡  QB", "⬡  RB", "⬡  WR", "⬡  TE", "⬡  TEAM SPLITS", "⬡  SOS", "⬡  PLAYER PROFILE"])
 
     with tabs[0]:
         st.markdown(f'<div class="section-label">// QUARTERBACK RANKINGS · {season} · MIN 5 GAMES</div>', unsafe_allow_html=True)
@@ -376,3 +387,176 @@ else:
                 st.dataframe(rename_cols(sos_df.tail(10)[show_c].sort_values("avg_pts_allowed")), use_container_width=True)
             st.markdown('<div class="section-label" style="margin-top:1.5rem">// ALL TEAMS</div>', unsafe_allow_html=True)
             st.dataframe(rename_cols(sos_df), use_container_width=True)
+
+    with tabs[6]:
+        st.markdown(f'<div class="section-label">// PLAYER PROFILE · {season} SEASON</div>', unsafe_allow_html=True)
+
+        player_info = load_player_info()
+        gamelogs    = load_gamelogs(season)
+
+        # Get all players from position CSVs
+        all_players = []
+        for pos in ["QB","RB","WR","TE"]:
+            df_pos = data[pos]
+            if not df_pos.empty and "player_display_name" in df_pos.columns:
+                all_players.extend(df_pos["player_display_name"].tolist())
+        all_players = sorted(set(all_players))
+
+        selected = st.selectbox("SELECT PLAYER", ["— choose a player —"] + all_players, key="profile_player")
+
+        if selected and selected != "— choose a player —":
+            # Find player in position CSVs
+            player_row = None
+            player_pos = None
+            for pos in ["QB","RB","WR","TE"]:
+                df_pos = data[pos]
+                if not df_pos.empty and "player_display_name" in df_pos.columns:
+                    match = df_pos[df_pos["player_display_name"] == selected]
+                    if not match.empty:
+                        player_row = match.iloc[0]
+                        player_pos = pos
+                        break
+
+            if player_row is not None:
+                # Get age from player_info
+                age = "N/A"
+                headshot = None
+                if not player_info.empty:
+                    info_match = player_info[player_info["player_display_name"] == selected]
+                    if not info_match.empty:
+                        age_val = info_match.iloc[0].get("age")
+                        age = int(age_val) if pd.notna(age_val) else "N/A"
+                        headshot = info_match.iloc[0].get("headshot_url")
+
+                # ── PROFILE HEADER ────────────────────────────────────────────
+                col_img, col_info = st.columns([1, 3])
+                with col_img:
+                    if headshot and pd.notna(headshot):
+                        st.image(headshot, width=140)
+                    else:
+                        st.markdown('<div style="width:140px;height:140px;background:#1a2a1a;border:1px solid #ff007f;display:flex;align-items:center;justify-content:center;font-size:2rem">🏈</div>', unsafe_allow_html=True)
+
+                with col_info:
+                    team  = player_row.get("recent_team","N/A")
+                    games = int(player_row.get("games", 0))
+                    total_pts = round(player_row.get("fantasy_points_ppr", 0), 1)
+                    fppg      = round(player_row.get("fppg_ppr", 0), 2)
+
+                    st.markdown(f"""
+<div style="font-family:'Share Tech Mono',monospace;">
+  <div style="font-size:1.8rem;color:#ff007f;font-weight:bold;">{selected}</div>
+  <div style="font-size:0.9rem;color:#c8d6e0;margin-top:0.3rem;">
+    {player_pos} · {team} · Age: {age}
+  </div>
+  <div style="display:flex;gap:2rem;margin-top:1rem;">
+    <div>
+      <div style="font-size:1.4rem;color:#ff007f;">{total_pts}</div>
+      <div style="font-size:0.65rem;color:#7a2a5a;letter-spacing:0.15em;">TOTAL PPR PTS</div>
+    </div>
+    <div>
+      <div style="font-size:1.4rem;color:#ff007f;">{fppg}</div>
+      <div style="font-size:0.65rem;color:#7a2a5a;letter-spacing:0.15em;">FPPG (PPR)</div>
+    </div>
+    <div>
+      <div style="font-size:1.4rem;color:#ff007f;">{games}</div>
+      <div style="font-size:0.65rem;color:#7a2a5a;letter-spacing:0.15em;">GAMES PLAYED</div>
+    </div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+                st.markdown("<br>", unsafe_allow_html=True)
+
+                # ── GAME LOG ──────────────────────────────────────────────────
+                st.markdown('<div class="section-label">// GAME LOG</div>', unsafe_allow_html=True)
+
+                if not gamelogs.empty:
+                    player_log = gamelogs[gamelogs["player_display_name"] == selected].copy()
+                    if not player_log.empty:
+                        player_log = player_log.sort_values("week").reset_index(drop=True)
+
+                        # ── BOOM/BUST THRESHOLDS (player-relative) ────────────
+                        avg_ppr = fppg  # player's season FPPG
+                        boom_threshold = avg_ppr * 1.5
+                        bust_threshold = avg_ppr * 0.5
+
+                        def classify(pts):
+                            if pd.isna(pts): return "—"
+                            if pts >= boom_threshold: return "BOOM"
+                            if pts <= bust_threshold: return "BUST"
+                            return "AVG"
+
+                        player_log["result"] = player_log["fantasy_points_ppr"].apply(classify)
+
+                        boom_count = (player_log["result"] == "BOOM").sum()
+                        bust_count = (player_log["result"] == "BUST").sum()
+                        avg_count  = (player_log["result"] == "AVG").sum()
+
+                        # ── BOOM/BUST SUMMARY CARDS ───────────────────────────
+                        bc1, bc2, bc3, bc4 = st.columns(4)
+                        with bc1:
+                            st.markdown(f'<div class="stat-card" style="border-left-color:#00cc44"><div class="stat-card-value" style="color:#00cc44">{boom_count}</div><div class="stat-card-label">BOOM games (≥{boom_threshold:.1f} pts)</div></div>', unsafe_allow_html=True)
+                        with bc2:
+                            st.markdown(f'<div class="stat-card" style="border-left-color:#ff3333"><div class="stat-card-value" style="color:#ff3333">{bust_count}</div><div class="stat-card-label">BUST games (≤{bust_threshold:.1f} pts)</div></div>', unsafe_allow_html=True)
+                        with bc3:
+                            st.markdown(f'<div class="stat-card"><div class="stat-card-value">{avg_count}</div><div class="stat-card-label">AVG games</div></div>', unsafe_allow_html=True)
+                        with bc4:
+                            boom_rate = f"{boom_count/len(player_log)*100:.0f}%" if len(player_log) > 0 else "—"
+                            st.markdown(f'<div class="stat-card"><div class="stat-card-value">{boom_rate}</div><div class="stat-card-label">BOOM rate</div></div>', unsafe_allow_html=True)
+
+                        st.markdown(f'<div style="font-family:Share Tech Mono,monospace;font-size:0.65rem;color:#7a2a5a;margin-bottom:0.5rem;">// BOOM = ≥1.5x avg ({boom_threshold:.1f} pts) · BUST = ≤0.5x avg ({bust_threshold:.1f} pts) · based on {avg_ppr:.1f} FPPG season avg</div>', unsafe_allow_html=True)
+
+                        # ── BUILD DISPLAY TABLE ───────────────────────────────
+                        base_cols = ["week","opponent_team","fantasy_points_ppr","result"]
+                        if player_pos == "QB":
+                            extra = ["completions","attempts","passing_yards","passing_tds",
+                                     "interceptions","carries","rushing_yards","rushing_tds","sacks"]
+                        elif player_pos == "RB":
+                            extra = ["carries","rushing_yards","rushing_tds",
+                                     "receptions","targets","receiving_yards","receiving_tds"]
+                        else:
+                            extra = ["receptions","targets","receiving_yards","receiving_tds"]
+
+                        show_cols = base_cols + [c for c in extra if c in player_log.columns]
+                        display_log = player_log[[c for c in show_cols if c in player_log.columns]].copy()
+                        # Format PPR pts to 2 decimal places as string
+                        if "fantasy_points_ppr" in display_log.columns:
+                            display_log["fantasy_points_ppr"] = display_log["fantasy_points_ppr"].apply(lambda x: f"{x:.2f}" if pd.notna(x) else "—")
+
+                        gl_labels = {
+                            "week":"Week","opponent_team":"Opp","fantasy_points_ppr":"PPR Pts",
+                            "result":"Result","completions":"Comp","attempts":"Att",
+                            "passing_yards":"Pass Yds","passing_tds":"Pass TD","interceptions":"INT",
+                            "carries":"Car","rushing_yards":"Rush Yds","rushing_tds":"Rush TD",
+                            "receptions":"Rec","targets":"Tgt","receiving_yards":"Rec Yds",
+                            "receiving_tds":"Rec TD","sacks":"Sacks",
+                        }
+                        display_log = display_log.rename(columns=gl_labels)
+
+                        # Color code the Result column
+                        def color_result(val):
+                            if val == "BOOM": return "background-color: #0a2e0a; color: #00cc44; font-weight: bold;"
+                            if val == "BUST": return "background-color: #2e0a0a; color: #ff3333; font-weight: bold;"
+                            return "color: #c8d6e0;"
+
+                        # Color code PPR Pts column (works with string values too)
+                        def color_pts(val):
+                            try:
+                                v = float(str(val).replace("—",""))
+                                if v >= boom_threshold: return "color: #00cc44; font-weight: bold;"
+                                if v <= bust_threshold: return "color: #ff3333; font-weight: bold;"
+                            except: pass
+                            return "color: #c8d6e0;"
+
+                        styled = display_log.style
+                        if "Result" in display_log.columns:
+                            styled = styled.map(color_result, subset=["Result"])
+                        if "PPR Pts" in display_log.columns:
+                            styled = styled.map(color_pts, subset=["PPR Pts"])
+
+                        st.dataframe(styled, use_container_width=True, hide_index=True)
+                        st.caption(f"// {len(player_log)} games · Season total PPR: {player_log['fantasy_points_ppr'].sum():.1f}")
+                    else:
+                        st.info("No game log data found for this player.")
+                else:
+                    st.warning("Run build_player_profiles.py to generate game logs.")
