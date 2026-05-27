@@ -475,54 +475,87 @@ if show_2026:
     with tabs[7]:
         st.markdown('<div class="section-label">// DRAFT NOTES · 2026 SEASON</div>', unsafe_allow_html=True)
 
-        MUST_DRAFT = {
-            "Early Round Must Draft (1-3)": [
-                "Omarion Hampton", "Ashton Jeanty",
-                "Malik Nabers", "Chase Brown", "James Cook III", "Brock Bowers",
-                "DeVonta Smith",
-            ],
-            "Mid Round Must Draft (4-7)": [
-                "Ladd McConkey", "TreVeyon Henderson", "Cam Skattebo",
-                "Christian Watson", "Emeka Egbuka", "Justin Herbert",
-                "Harold Fannin Jr.", "Bhayshul Tuten", "DJ Moore",
-            ],
-            "Late Round Must Draft (8+)": [
-                "Tucker Kraft", "Josh Downs", "Matthew Golden",
-                "Jadarian Price", "Kyle Monangai", "George Kittle",
-            ],
-        }
+        draft_page = st.radio("", ["Must Drafts & Must Avoids", "Target Picks"], horizontal=True, label_visibility="collapsed", key="draft_notes_page")
 
-        MUST_AVOID = {
-            "Early Round Must Avoid (1-3)": [
-                "Trey McBride", "De'Von Achane", "Christian McCaffrey",
-                "Jeremiyah Love", "George Pickens",
-            ],
-            "Mid Round Must Avoid (4-7)": [
-                "Davante Adams", "Tyler Warren", "Bucky Irving",
-            ],
-            "Late Round Must Avoid (8+)": [
-                "Dallas Goedert", "Khalil Shakir",
-                "Jacory Croskey-Merritt", "Calvin Ridley",
-            ],
-        }
+        if draft_page == "Must Drafts & Must Avoids":
+            MUST_DRAFT = {
+                "Early Round Must Draft (1-3)": [
+                    "Omarion Hampton", "Ashton Jeanty",
+                    "Malik Nabers", "Chase Brown", "James Cook III", "Brock Bowers",
+                    "DeVonta Smith",
+                ],
+                "Mid Round Must Draft (4-7)": [
+                    "Ladd McConkey", "TreVeyon Henderson", "Cam Skattebo",
+                    "Christian Watson", "Emeka Egbuka", "Justin Herbert",
+                    "Harold Fannin Jr.", "Bhayshul Tuten", "DJ Moore",
+                ],
+                "Late Round Must Draft (8+)": [
+                    "Tucker Kraft", "Josh Downs", "Matthew Golden",
+                    "Jadarian Price", "Kyle Monangai", "George Kittle",
+                ],
+            }
 
-        col1, col2 = st.columns(2)
+            MUST_AVOID = {
+                "Early Round Must Avoid (1-3)": [
+                    "Trey McBride", "De'Von Achane", "Christian McCaffrey",
+                    "Jeremiyah Love", "George Pickens",
+                ],
+                "Mid Round Must Avoid (4-7)": [
+                    "Davante Adams", "Tyler Warren", "Bucky Irving",
+                ],
+                "Late Round Must Avoid (8+)": [
+                    "Dallas Goedert", "Khalil Shakir",
+                    "Jacory Croskey-Merritt", "Calvin Ridley",
+                ],
+            }
 
-        with col1:
-            st.markdown('<div style="font-family:Share Tech Mono,monospace;font-size:0.8rem;color:#00cc44;letter-spacing:0.15em;margin-bottom:1rem;">// MUST DRAFTS</div>', unsafe_allow_html=True)
-            for category, players in MUST_DRAFT.items():
-                st.markdown(f'<div style="font-family:Share Tech Mono,monospace;font-size:0.7rem;color:#7a2a5a;letter-spacing:0.12em;margin-top:1rem;margin-bottom:0.4rem;border-bottom:1px solid #2a0a1a;padding-bottom:0.2rem;">{category.upper()}</div>', unsafe_allow_html=True)
-                for p in players:
-                    st.markdown(f'<div style="padding:0.4rem 0.6rem;margin:0.2rem 0;background:#0a1f0a;border-left:3px solid #00cc44;font-size:0.85rem;color:#c8d6e0;">✦ {p}</div>', unsafe_allow_html=True)
+            col1, col2 = st.columns(2)
 
-        with col2:
-            st.markdown('<div style="font-family:Share Tech Mono,monospace;font-size:0.8rem;color:#ff3333;letter-spacing:0.15em;margin-bottom:1rem;">// MUST AVOIDS</div>', unsafe_allow_html=True)
-            for category, players in MUST_AVOID.items():
-                st.markdown(f'<div style="font-family:Share Tech Mono,monospace;font-size:0.7rem;color:#7a2a5a;letter-spacing:0.12em;margin-top:1rem;margin-bottom:0.4rem;border-bottom:1px solid #2a0a1a;padding-bottom:0.2rem;">{category.upper()}</div>', unsafe_allow_html=True)
-                for p in players:
-                    st.markdown(f'<div style="padding:0.4rem 0.6rem;margin:0.2rem 0;background:#1f0a0a;border-left:3px solid #ff3333;font-size:0.85rem;color:#c8d6e0;">✗ {p}</div>', unsafe_allow_html=True)
+            with col1:
+                st.markdown('<div style="font-family:Share Tech Mono,monospace;font-size:0.8rem;color:#00cc44;letter-spacing:0.15em;margin-bottom:1rem;">// MUST DRAFTS</div>', unsafe_allow_html=True)
+                for category, players in MUST_DRAFT.items():
+                    st.markdown(f'<div style="font-family:Share Tech Mono,monospace;font-size:0.7rem;color:#7a2a5a;letter-spacing:0.12em;margin-top:1rem;margin-bottom:0.4rem;border-bottom:1px solid #2a0a1a;padding-bottom:0.2rem;">{category.upper()}</div>', unsafe_allow_html=True)
+                    for p in players:
+                        st.markdown(f'<div style="padding:0.4rem 0.6rem;margin:0.2rem 0;background:#0a1f0a;border-left:3px solid #00cc44;font-size:0.85rem;color:#c8d6e0;">✦ {p}</div>', unsafe_allow_html=True)
 
-        st.markdown('<div style="font-family:Share Tech Mono,monospace;font-size:0.65rem;color:#7a2a5a;margin-top:1.5rem;">// Numbers in parentheses indicate suggested draft round · PPR scoring</div>', unsafe_allow_html=True)
+            with col2:
+                st.markdown('<div style="font-family:Share Tech Mono,monospace;font-size:0.8rem;color:#ff3333;letter-spacing:0.15em;margin-bottom:1rem;">// MUST AVOIDS</div>', unsafe_allow_html=True)
+                for category, players in MUST_AVOID.items():
+                    st.markdown(f'<div style="font-family:Share Tech Mono,monospace;font-size:0.7rem;color:#7a2a5a;letter-spacing:0.12em;margin-top:1rem;margin-bottom:0.4rem;border-bottom:1px solid #2a0a1a;padding-bottom:0.2rem;">{category.upper()}</div>', unsafe_allow_html=True)
+                    for p in players:
+                        st.markdown(f'<div style="padding:0.4rem 0.6rem;margin:0.2rem 0;background:#1f0a0a;border-left:3px solid #ff3333;font-size:0.85rem;color:#c8d6e0;">✗ {p}</div>', unsafe_allow_html=True)
+
+            st.markdown('<div style="font-family:Share Tech Mono,monospace;font-size:0.65rem;color:#7a2a5a;margin-top:1.5rem;">// Numbers in parentheses indicate suggested draft round · PPR scoring</div>', unsafe_allow_html=True)
+
+        else:
+            TARGET_PICKS = {
+                "Round 1":  ["Bijan Robinson", "Jahmyr Gibbs", "Puka Nacua", "James Cook III"],
+                "Round 2":  ["Omarion Hampton", "Malik Nabers", "Chase Brown", "Brock Bowers"],
+                "Round 3":  ["Javonte Williams", "Tetairoa McMillan", "DeVonta Smith"],
+                "Round 4":  ["Cam Skattebo", "Ladd McConkey", "Terry McLaurin", "Emeka Egbuka"],
+                "Round 5":  ["Rome Odunze", "DJ Moore", "Bhayshul Tuten", "Quinshon Judkins", "Mike Evans"],
+                "Round 6":  ["Parker Washington", "Christian Watson", "Jalen Hurts", "Carnell Tate"],
+                "Round 7":  ["Justin Herbert", "Harold Fannin Jr.", "Dak Prescott", "Tucker Kraft"],
+                "Round 8":  ["Tucker Kraft", "Sam LaPorta", "Michael Wilson"],
+                "Round 9":  ["J.K. Dobbins", "Michael Pittman Jr.", "Kenneth Gainwell", "Josh Downs"],
+                "Round 10": ["Matthew Golden", "George Kittle"],
+                "Round 11": ["KC Concepcion", "Aaron Jones Sr.", "Isaiah Likely"],
+            }
+
+            st.markdown('<div style="font-family:Share Tech Mono,monospace;font-size:0.8rem;color:#ff007f;letter-spacing:0.15em;margin-bottom:1.5rem;">// FAVORITE PICKS BY ROUND</div>', unsafe_allow_html=True)
+
+            col1, col2 = st.columns(2)
+            rounds = list(TARGET_PICKS.items())
+            mid = (len(rounds) + 1) // 2
+
+            for i, (rnd, players) in enumerate(rounds):
+                col = col1 if i < mid else col2
+                with col:
+                    st.markdown(f'<div style="font-family:Share Tech Mono,monospace;font-size:0.7rem;color:#7a2a5a;letter-spacing:0.12em;margin-top:1rem;margin-bottom:0.4rem;border-bottom:1px solid #2a0a1a;padding-bottom:0.2rem;">{rnd.upper()}</div>', unsafe_allow_html=True)
+                    for p in players:
+                        st.markdown(f'<div style="padding:0.4rem 0.6rem;margin:0.2rem 0;background:#0d1a2e;border-left:3px solid #ff007f;font-size:0.85rem;color:#c8d6e0;">◆ {p}</div>', unsafe_allow_html=True)
+
+            st.markdown('<div style="font-family:Share Tech Mono,monospace;font-size:0.65rem;color:#7a2a5a;margin-top:1.5rem;">// Target picks based on value vs ADP · PPR scoring</div>', unsafe_allow_html=True)
 
     with tabs[8]:
         st.markdown('<div class="section-label">// SOURCE COMPARISON · WHERE EXPERTS AGREE & DISAGREE</div>', unsafe_allow_html=True)
