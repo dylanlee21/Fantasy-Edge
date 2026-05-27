@@ -468,7 +468,7 @@ if show_2026:
                 display.style.map(style_pos, subset=["Pos"]),
                 use_container_width=True, height=700, hide_index=True
             )
-            st.caption(f"// {len(mb)} players shown · ESPN Mock Draft 10-team PPR · formatted as 12-team")
+            st.caption(f"// {len(mb)} players shown · FantasyPros PPR ADP 2026 · 12-team linear draft order")
         else:
             st.warning("Run create_mock_board.py to generate the mock board.")
 

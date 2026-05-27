@@ -223,8 +223,7 @@ def build_mock_board(data, team_size=12):
         pick_num = i + 1
         round_num = (pick_num - 1) // team_size + 1
         pos_in_round = (pick_num - 1) % team_size + 1
-        # Snake: even rounds go in reverse
-        pick_in_round = pos_in_round if round_num % 2 == 1 else team_size - pos_in_round + 1
+        pick_in_round = pos_in_round
         rows.append({
             "round":        round_num,
             "pick_in_round": pick_in_round,

@@ -11,18 +11,18 @@ round,pick_in_round,overall_pick,player,position,team,adp
 1,10,10,James Cook III,RB,BUF,10.5
 1,11,11,Justin Jefferson,WR,MIN,11.0
 1,12,12,Ashton Jeanty,RB,LV,11.0
-2,12,13,De'Von Achane,RB,MIA,12.5
-2,11,14,Saquon Barkley,RB,PHI,15.0
-2,10,15,Omarion Hampton,RB,LAC,16.5
-2,9,16,Kenneth Walker III,RB,KC,16.5
-2,8,17,Chase Brown,RB,CIN,16.5
-2,7,18,Rashee Rice,WR,KC,18.5
-2,6,19,Drake London,WR,ATL,18.5
-2,5,20,Trey McBride,TE,ARI,19.5
-2,4,21,Jeremiyah Love,RB,ARI,21.5
-2,3,22,Derrick Henry,RB,BAL,21.5
-2,2,23,Brock Bowers,TE,LV,22.0
-2,1,24,Nico Collins,WR,HOU,25.0
+2,1,13,De'Von Achane,RB,MIA,12.5
+2,2,14,Saquon Barkley,RB,PHI,15.0
+2,3,15,Omarion Hampton,RB,LAC,16.5
+2,4,16,Kenneth Walker III,RB,KC,16.5
+2,5,17,Chase Brown,RB,CIN,16.5
+2,6,18,Rashee Rice,WR,KC,18.5
+2,7,19,Drake London,WR,ATL,18.5
+2,8,20,Trey McBride,TE,ARI,19.5
+2,9,21,Jeremiyah Love,RB,ARI,21.5
+2,10,22,Derrick Henry,RB,BAL,21.5
+2,11,23,Brock Bowers,TE,LV,22.0
+2,12,24,Nico Collins,WR,HOU,25.0
 3,1,25,Malik Nabers,WR,NYG,25.0
 3,2,26,George Pickens,WR,DAL,26.0
 3,3,27,A.J. Brown,WR,PHI,28.0
@@ -35,18 +35,18 @@ round,pick_in_round,overall_pick,player,position,team,adp
 3,10,34,DeVonta Smith,WR,PHI,35.0
 3,11,35,Garrett Wilson,WR,NYJ,35.5
 3,12,36,Tetairoa McMillan,WR,CAR,35.5
-4,12,37,Javonte Williams,RB,DAL,36.0
-4,11,38,Tee Higgins,WR,CIN,37.0
-4,10,39,Zay Flowers,WR,BAL,37.5
-4,9,40,Ladd McConkey,WR,LAC,40.5
-4,8,41,Bucky Irving,RB,TB,43.0
-4,7,42,Emeka Egbuka,WR,TB,43.5
-4,6,43,Luther Burden III,WR,CHI,43.5
-4,5,44,Colston Loveland,TE,CHI,44.5
-4,4,45,Cam Skattebo,RB,NYG,45.0
-4,3,46,TreVeyon Henderson,RB,NE,47.5
-4,2,47,Lamar Jackson,QB,BAL,48.0
-4,1,48,Davante Adams,WR,LAR,48.0
+4,1,37,Javonte Williams,RB,DAL,36.0
+4,2,38,Tee Higgins,WR,CIN,37.0
+4,3,39,Zay Flowers,WR,BAL,37.5
+4,4,40,Ladd McConkey,WR,LAC,40.5
+4,5,41,Bucky Irving,RB,TB,43.0
+4,6,42,Emeka Egbuka,WR,TB,43.5
+4,7,43,Luther Burden III,WR,CHI,43.5
+4,8,44,Colston Loveland,TE,CHI,44.5
+4,9,45,Cam Skattebo,RB,NYG,45.0
+4,10,46,TreVeyon Henderson,RB,NE,47.5
+4,11,47,Lamar Jackson,QB,BAL,48.0
+4,12,48,Davante Adams,WR,LAR,48.0
 5,1,49,David Montgomery,RB,HOU,50.0
 5,2,50,Terry McLaurin,WR,WAS,51.5
 5,3,51,Jameson Williams,WR,DET,51.5
@@ -59,18 +59,18 @@ round,pick_in_round,overall_pick,player,position,team,adp
 5,10,58,Joe Burrow,QB,CIN,57.5
 5,11,59,Christian Watson,WR,GB,57.5
 5,12,60,Drake Maye,QB,NE,58.0
-6,12,61,Jadarian Price,RB,SEA,62.0
-6,11,62,Bhayshul Tuten,RB,JAC,62.0
-6,10,63,Chuba Hubbard,RB,CAR,63.5
-6,9,64,Carnell Tate,WR,TEN,63.5
-6,8,65,Jayden Daniels,QB,WAS,64.0
-6,7,66,Tyler Warren,TE,IND,64.5
-6,6,67,Marvin Harrison Jr.,WR,ARI,67.5
-6,5,68,Caleb Williams,QB,CHI,69.0
-6,4,69,Jalen Hurts,QB,PHI,70.5
-6,3,70,Jordyn Tyson,WR,NO,72.0
-6,2,71,Jaylen Warren,RB,PIT,74.0
-6,1,72,Brian Thomas Jr.,WR,JAC,75.0
+6,1,61,Jadarian Price,RB,SEA,62.0
+6,2,62,Bhayshul Tuten,RB,JAC,62.0
+6,3,63,Chuba Hubbard,RB,CAR,63.5
+6,4,64,Carnell Tate,WR,TEN,63.5
+6,5,65,Jayden Daniels,QB,WAS,64.0
+6,6,66,Tyler Warren,TE,IND,64.5
+6,7,67,Marvin Harrison Jr.,WR,ARI,67.5
+6,8,68,Caleb Williams,QB,CHI,69.0
+6,9,69,Jalen Hurts,QB,PHI,70.5
+6,10,70,Jordyn Tyson,WR,NO,72.0
+6,11,71,Jaylen Warren,RB,PIT,74.0
+6,12,72,Brian Thomas Jr.,WR,JAC,75.0
 7,1,73,DK Metcalf,WR,PIT,75.0
 7,2,74,RJ Harvey,RB,DEN,75.5
 7,3,75,Parker Washington,WR,JAC,76.0
@@ -83,18 +83,18 @@ round,pick_in_round,overall_pick,player,position,team,adp
 7,10,82,Tony Pollard,RB,TEN,80.0
 7,11,83,Harold Fannin Jr.,TE,CLE,81.5
 7,12,84,Jaxson Dart,QB,NYG,82.0
-8,12,85,Makai Lemon,WR,PHI,84.0
-8,11,86,Tucker Kraft,TE,GB,84.0
-8,10,87,Michael Wilson,WR,ARI,86.0
-8,9,88,Rico Dowdle,RB,PIT,89.0
-8,8,89,Patrick Mahomes II,QB,KC,92.0
-8,7,90,Kyle Monangai,RB,CHI,93.0
-8,6,91,Chris Godwin Jr.,WR,TB,93.5
-8,5,92,Matthew Stafford,QB,LAR,93.5
-8,4,93,Jakobi Meyers,WR,JAC,93.5
-8,3,94,Brock Purdy,QB,SF,94.0
-8,2,95,Ricky Pearsall,WR,SF,96.0
-8,1,96,Sam LaPorta,TE,DET,96.5
+8,1,85,Makai Lemon,WR,PHI,84.0
+8,2,86,Tucker Kraft,TE,GB,84.0
+8,3,87,Michael Wilson,WR,ARI,86.0
+8,4,88,Rico Dowdle,RB,PIT,89.0
+8,5,89,Patrick Mahomes II,QB,KC,92.0
+8,6,90,Kyle Monangai,RB,CHI,93.0
+8,7,91,Chris Godwin Jr.,WR,TB,93.5
+8,8,92,Matthew Stafford,QB,LAR,93.5
+8,9,93,Jakobi Meyers,WR,JAC,93.5
+8,10,94,Brock Purdy,QB,SF,94.0
+8,11,95,Ricky Pearsall,WR,SF,96.0
+8,12,96,Sam LaPorta,TE,DET,96.5
 9,1,97,Jayden Reed,WR,GB,97.0
 9,2,98,Kyle Pitts Sr.,TE,ATL,97.5
 9,3,99,Quentin Johnston,WR,LAC,97.5
@@ -107,18 +107,18 @@ round,pick_in_round,overall_pick,player,position,team,adp
 9,10,106,Kenneth Gainwell,RB,TB,105.0
 9,11,107,Tyler Shough,QB,NO,105.5
 9,12,108,Josh Downs,WR,IND,107.0
-10,12,109,Jordan Love,QB,GB,108.0
-10,11,110,Wan'Dale Robinson,WR,TEN,108.0
-10,10,111,Kyler Murray,QB,MIN,108.5
-10,9,112,Baker Mayfield,QB,TB,111.0
-10,8,113,Romeo Doubs,WR,NE,115.0
-10,7,114,Khalil Shakir,WR,BUF,118.5
-10,6,115,George Kittle,TE,SF,118.5
-10,5,116,Matthew Golden,WR,GB,119.0
-10,4,117,Jacory Croskey-Merritt,RB,WAS,121.5
-10,3,118,Malik Willis,QB,MIA,121.5
-10,2,119,Jake Ferguson,TE,DAL,122.0
-10,1,120,Travis Kelce,TE,KC,122.5
+10,1,109,Jordan Love,QB,GB,108.0
+10,2,110,Wan'Dale Robinson,WR,TEN,108.0
+10,3,111,Kyler Murray,QB,MIN,108.5
+10,4,112,Baker Mayfield,QB,TB,111.0
+10,5,113,Romeo Doubs,WR,NE,115.0
+10,6,114,Khalil Shakir,WR,BUF,118.5
+10,7,115,George Kittle,TE,SF,118.5
+10,8,116,Matthew Golden,WR,GB,119.0
+10,9,117,Jacory Croskey-Merritt,RB,WAS,121.5
+10,10,118,Malik Willis,QB,MIA,121.5
+10,11,119,Jake Ferguson,TE,DAL,122.0
+10,12,120,Travis Kelce,TE,KC,122.5
 11,1,121,Rachaad White,RB,WAS,122.5
 11,2,122,Jordan Mason,RB,MIN,123.0
 11,3,123,KC Concepcion,WR,CLE,123.5
@@ -131,18 +131,18 @@ round,pick_in_round,overall_pick,player,position,team,adp
 11,10,130,Isaiah Likely,TE,NYG,128.5
 11,11,131,Dallas Goedert,TE,PHI,130.0
 11,12,132,Dalton Kincaid,TE,BUF,130.0
-12,12,133,Sam Darnold,QB,SEA,131.5
-12,11,134,Jonathon Brooks,RB,CAR,133.0
-12,10,135,C.J. Stroud,QB,HOU,133.0
-12,9,136,Tyrone Tracy Jr.,RB,NYG,133.5
-12,8,137,Cam Ward,QB,TEN,135.0
-12,7,138,Houston Texans DST,DST,HOU,135.0
-12,6,139,Mark Andrews,TE,BAL,138.0
-12,5,140,Daniel Jones,QB,IND,140.0
-12,4,141,Bryce Young,QB,CAR,143.0
-12,3,142,Tyler Allgeier,RB,ARI,145.0
-12,2,143,Jauan Jennings,WR,MIN,145.5
-12,1,144,Juwan Johnson,TE,NO,146.0
+12,1,133,Sam Darnold,QB,SEA,131.5
+12,2,134,Jonathon Brooks,RB,CAR,133.0
+12,3,135,C.J. Stroud,QB,HOU,133.0
+12,4,136,Tyrone Tracy Jr.,RB,NYG,133.5
+12,5,137,Cam Ward,QB,TEN,135.0
+12,6,138,Houston Texans DST,DST,HOU,135.0
+12,7,139,Mark Andrews,TE,BAL,138.0
+12,8,140,Daniel Jones,QB,IND,140.0
+12,9,141,Bryce Young,QB,CAR,143.0
+12,10,142,Tyler Allgeier,RB,ARI,145.0
+12,11,143,Jauan Jennings,WR,MIN,145.5
+12,12,144,Juwan Johnson,TE,NO,146.0
 13,1,145,Woody Marks,RB,HOU,146.5
 13,2,146,Jalen McMillan,WR,TB,148.0
 13,3,147,Stefon Diggs,WR,FA,148.0
@@ -155,18 +155,18 @@ round,pick_in_round,overall_pick,player,position,team,adp
 13,10,154,Jonah Coleman,RB,DEN,153.5
 13,11,155,Hunter Henry,TE,NE,154.0
 13,12,156,Dylan Sampson,RB,CLE,155.0
-14,12,157,Tyjae Spears,RB,TEN,155.5
-14,11,158,Keaton Mitchell,RB,LAC,156.0
-14,10,159,Omar Cooper Jr.,WR,NYJ,156.0
-14,9,160,Tre Tucker,WR,LV,156.0
-14,8,161,Chig Okonkwo,TE,WAS,157.5
-14,7,162,Los Angeles Rams DST,DST,LAR,161.0
-14,6,163,Deebo Samuel Sr.,WR,FA,161.5
-14,5,164,Jalen Nailor,WR,LV,165.0
-14,4,165,T.J. Hockenson,TE,MIN,166.0
-14,3,166,Denzel Boston,WR,CLE,166.0
-14,2,167,Zach Charbonnet,RB,SEA,168.0
-14,1,168,Emmett Johnson,RB,KC,169.5
+14,1,157,Tyjae Spears,RB,TEN,155.5
+14,2,158,Keaton Mitchell,RB,LAC,156.0
+14,3,159,Omar Cooper Jr.,WR,NYJ,156.0
+14,4,160,Tre Tucker,WR,LV,156.0
+14,5,161,Chig Okonkwo,TE,WAS,157.5
+14,6,162,Los Angeles Rams DST,DST,LAR,161.0
+14,7,163,Deebo Samuel Sr.,WR,FA,161.5
+14,8,164,Jalen Nailor,WR,LV,165.0
+14,9,165,T.J. Hockenson,TE,MIN,166.0
+14,10,166,Denzel Boston,WR,CLE,166.0
+14,11,167,Zach Charbonnet,RB,SEA,168.0
+14,12,168,Emmett Johnson,RB,KC,169.5
 15,1,169,Dalton Schultz,TE,HOU,170.5
 15,2,170,Brian Robinson Jr.,RB,ATL,174.0
 15,3,171,Brandon Aiyuk,WR,SF,174.0
@@ -179,18 +179,18 @@ round,pick_in_round,overall_pick,player,position,team,adp
 15,10,178,New England Patriots DST,DST,NE,180.0
 15,11,179,Jerry Jeudy,WR,CLE,181.0
 15,12,180,Kaytron Allen,RB,WAS,184.5
-16,12,181,Philadelphia Eagles DST,DST,PHI,185.0
-16,11,182,Tank Bigsby,RB,PHI,186.5
-16,10,183,Jacksonville Jaguars DST,DST,JAC,187.0
-16,9,184,Pittsburgh Steelers DST,DST,PIT,188.0
-16,8,185,Ryan Flournoy,WR,DAL,188.5
-16,7,186,Gunnar Helm,TE,TEN,191.0
-16,6,187,Nicholas Singleton,RB,TEN,192.0
-16,5,188,Los Angeles Chargers DST,DST,LAC,193.0
-16,4,189,Kimani Vidal,RB,LAC,193.5
-16,3,190,James Conner,RB,ARI,196.5
-16,2,191,Cade Otton,TE,TB,197.0
-16,1,192,Pat Freiermuth,TE,PIT,198.5
+16,1,181,Philadelphia Eagles DST,DST,PHI,185.0
+16,2,182,Tank Bigsby,RB,PHI,186.5
+16,3,183,Jacksonville Jaguars DST,DST,JAC,187.0
+16,4,184,Pittsburgh Steelers DST,DST,PIT,188.0
+16,5,185,Ryan Flournoy,WR,DAL,188.5
+16,6,186,Gunnar Helm,TE,TEN,191.0
+16,7,187,Nicholas Singleton,RB,TEN,192.0
+16,8,188,Los Angeles Chargers DST,DST,LAC,193.0
+16,9,189,Kimani Vidal,RB,LAC,193.5
+16,10,190,James Conner,RB,ARI,196.5
+16,11,191,Cade Otton,TE,TB,197.0
+16,12,192,Pat Freiermuth,TE,PIT,198.5
 17,1,193,Calvin Ridley,WR,TEN,200.0
 17,2,194,Braelon Allen,RB,NYJ,201.0
 17,3,195,David Njoku,TE,LAC,202.0
