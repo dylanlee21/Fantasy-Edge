@@ -60,15 +60,14 @@ COL_LABELS = {
     "espn_rank": "ESPN Rank", "consensus_rank": "Consensus Rank",
     "rb_overall_rank": "RotoBaller Rank", "rb_pos_rank": "RotoBaller Pos Rank",
     "yahoo_rank": "Yahoo Rank", "yahoo_pos_rank": "Yahoo Pos Rank",
+    "ybc_att": "YBC/ATT", "yac_att": "YAC/ATT", "yprr": "YPRR",
 }
 
 PCT_COLS = {"target_share", "air_yards_share", "catch_rate", "comp_pct", "avg_snap_pct",
             "pass_rate", "run_rate", "opportunity_share", "rz_pass_rate", "rz_run_rate", "rz_conversion_rate"}
 
 # ── OPPORTUNITY SCORE DATA · 2025 · TOP 50 PER POSITION ──────────────────────
-# Weekly values: None = BYE week, "S" = suspended
-# Columns after weekly: avg_l4 (last 4 avg), avg (season avg), total (season total opp), opp_fpts (actual ppr pts)
-_B = None  # BYE sentinel
+_B = None
 
 OPP_SCORE_DATA = {
 "RB": [
@@ -230,27 +229,21 @@ OPP_SCORE_DATA = {
 }
 
 def build_opp_df(rows):
-    """Build styled DataFrame for Opportunity Score display."""
     records = []
     for d in rows:
         row = {"RK": d["rank"], "Player": d["player"]}
         for w in range(1, 15):
             val = d.get(f"w{w}")
-            if val is None:
-                row[f"W{w}"] = "BYE"
-            elif val == "S":
-                row[f"W{w}"] = "SUS"
-            elif val == 0:
-                row[f"W{w}"] = "—"
-            else:
-                row[f"W{w}"] = f"{val:.2f}"
-        row["AVG (L4)"] = d["avg_l4"]
-        row["AVG OPP"]  = d["avg"]
+            if val is None:    row[f"W{w}"] = "BYE"
+            elif val == "S":   row[f"W{w}"] = "SUS"
+            elif val == 0:     row[f"W{w}"] = "—"
+            else:              row[f"W{w}"] = f"{val:.2f}"
+        row["AVG (L4)"]  = d["avg_l4"]
+        row["AVG OPP"]   = d["avg"]
         row["TOTAL OPP"] = d["total"]
         row["OPP FPTS"]  = d["opp_fpts"]
         records.append(row)
     return pd.DataFrame(records)
-
 
 @st.cache_data
 def load_player_info():
@@ -265,9 +258,9 @@ def load_gamelogs(year):
 @st.cache_data
 def load_year(year):
     year_dir = os.path.join(DATA_DIR, str(year))
-    files = {"QB": "qb_stats.csv", "RB": "rb_stats.csv", "WR": "wr_stats.csv",
-             "TE": "te_stats.csv", "SOS": "sos_by_team.csv", "SPLITS": "team_splits.csv"}
-    index_col_map = {"QB": 0, "RB": 0, "WR": 0, "TE": 0, "SOS": None, "SPLITS": None}
+    files = {"QB":"qb_stats.csv","RB":"rb_stats.csv","WR":"wr_stats.csv",
+             "TE":"te_stats.csv","SOS":"sos_by_team.csv","SPLITS":"team_splits.csv"}
+    index_col_map = {"QB":0,"RB":0,"WR":0,"TE":0,"SOS":None,"SPLITS":None}
     data = {}
     for key, fname in files.items():
         path = os.path.join(year_dir, fname)
@@ -371,7 +364,7 @@ if show_2026:
     rank_cols     = [c for c in ["consensus_rank","fc_rank","ffc_rank","fp_rank","espn_rank","rb_overall_rank","yahoo_rank"] if not master.empty and c in master.columns]
     pos_rank_cols = [c for c in ["consensus_rank","fc_pos_rank","fp_pos_rank","rb_pos_rank","yahoo_pos_rank"] if not master.empty and c in master.columns]
 
-    tabs = st.tabs(["⬡  OVERALL", "⬡  QB", "⬡  RB", "⬡  WR", "⬡  TE", "⬡  SOS 2026", "⬡  MOCK BOARD", "⬡  DRAFT NOTES", "⬡  SOURCE COMPARE"])
+    tabs = st.tabs(["⬡  OVERALL","⬡  QB","⬡  RB","⬡  WR","⬡  TE","⬡  SOS 2026","⬡  MOCK BOARD","⬡  DRAFT NOTES","⬡  SOURCE COMPARE"])
 
     with tabs[0]:
         st.markdown('<div class="section-label">// 2026 CONSENSUS RANKINGS · PPR · ALL POSITIONS</div>', unsafe_allow_html=True)
@@ -379,13 +372,12 @@ if show_2026:
             s = st.text_input("🔍  SEARCH PLAYER", key="s_all", placeholder="e.g. Bijan, Jefferson...")
             c1, c2 = st.columns([2, 1])
             with c1:
-                sort_opt = st.selectbox("SORT BY", rank_cols, key="sort_all",
-                                        format_func=lambda x: COL_LABELS.get(x, x))
+                sort_opt = st.selectbox("SORT BY", rank_cols, key="sort_all", format_func=lambda x: COL_LABELS.get(x, x))
             with c2:
                 asc = st.selectbox("ORDER", ["↑ Low→High (best rank)", "↓ High→Low"], key="asc_all")
             show_2026_table(master, search=s, sort_col=sort_opt, ascending=(asc == "↑ Low→High (best rank)"))
 
-    for i, pos in enumerate(["QB", "RB", "WR", "TE"]):
+    for i, pos in enumerate(["QB","RB","WR","TE"]):
         with tabs[i + 1]:
             st.markdown(f'<div class="section-label">// 2026 {pos} RANKINGS · PPR · CONSENSUS</div>', unsafe_allow_html=True)
             if not master.empty:
@@ -393,12 +385,10 @@ if show_2026:
                 c1, c2 = st.columns([2, 1])
                 with c1:
                     opts = pos_rank_cols if pos_rank_cols else rank_cols
-                    sort_opt = st.selectbox("SORT BY", opts, key=f"sort_{pos}26",
-                                            format_func=lambda x: COL_LABELS.get(x, x))
+                    sort_opt = st.selectbox("SORT BY", opts, key=f"sort_{pos}26", format_func=lambda x: COL_LABELS.get(x, x))
                 with c2:
                     asc = st.selectbox("ORDER", ["↑ Low→High (best rank)", "↓ High→Low"], key=f"asc_{pos}26")
-                show_2026_table(master, pos_filter=pos, search=s,
-                                sort_col=sort_opt, ascending=(asc == "↑ Low→High (best rank)"))
+                show_2026_table(master, pos_filter=pos, search=s, sort_col=sort_opt, ascending=(asc == "↑ Low→High (best rank)"))
 
     with tabs[5]:
         st.markdown('<div class="section-label">// 2026 STRENGTH OF SCHEDULE · BASED ON 2025 DEFENSIVE RANKINGS</div>', unsafe_allow_html=True)
@@ -406,42 +396,30 @@ if show_2026:
             pos_f = st.selectbox("POSITION", ["RB","WR","QB","TE"], key="sos26_pos")
             sos_f = sos_2026[sos_2026["position"] == pos_f].copy()
             sos_f = sos_f.sort_values("sos_2026_rank").reset_index(drop=True)
-
             c1, c2 = st.columns(2)
             with c1:
                 st.markdown(f"**Easiest {pos_f} Schedules** (face weakest defenses)")
                 easy = sos_f.head(8)[["team","avg_opp_pts_allowed","sos_2026_rank","difficulty","games_rated"]]
-                st.dataframe(easy.rename(columns={
-                    "team":"Team","avg_opp_pts_allowed":"Avg PPR Pts Allowed vs Position",
-                    "sos_2026_rank":"SOS Rank","difficulty":"Difficulty","games_rated":"Games Rated"
-                }), use_container_width=True, hide_index=True)
+                st.dataframe(easy.rename(columns={"team":"Team","avg_opp_pts_allowed":"Avg PPR Pts Allowed vs Position","sos_2026_rank":"SOS Rank","difficulty":"Difficulty","games_rated":"Games Rated"}), use_container_width=True, hide_index=True)
             with c2:
                 st.markdown(f"**Hardest {pos_f} Schedules** (face strongest defenses)")
                 hard = sos_f.tail(8).sort_values("sos_2026_rank", ascending=False)[["team","avg_opp_pts_allowed","sos_2026_rank","difficulty","games_rated"]]
-                st.dataframe(hard.rename(columns={
-                    "team":"Team","avg_opp_pts_allowed":"Avg PPR Pts Allowed vs Position",
-                    "sos_2026_rank":"SOS Rank","difficulty":"Difficulty","games_rated":"Games Rated"
-                }), use_container_width=True, hide_index=True)
-
+                st.dataframe(hard.rename(columns={"team":"Team","avg_opp_pts_allowed":"Avg PPR Pts Allowed vs Position","sos_2026_rank":"SOS Rank","difficulty":"Difficulty","games_rated":"Games Rated"}), use_container_width=True, hide_index=True)
             st.markdown('<div class="section-label" style="margin-top:1.5rem">// ALL TEAMS</div>', unsafe_allow_html=True)
-            st.dataframe(sos_f.rename(columns={
-                "team":"Team","avg_opp_pts_allowed":"Avg PPR Pts Allowed vs Position",
-                "sos_2026_rank":"SOS Rank","difficulty":"Difficulty","games_rated":"Games Rated"
-            }), use_container_width=True, hide_index=True)
+            st.dataframe(sos_f.rename(columns={"team":"Team","avg_opp_pts_allowed":"Avg PPR Pts Allowed vs Position","sos_2026_rank":"SOS Rank","difficulty":"Difficulty","games_rated":"Games Rated"}), use_container_width=True, hide_index=True)
             st.caption("// Avg PPR fantasy pts allowed by each opponent defense vs that position in 2025 · Higher = easier schedule")
         else:
             st.warning("Run fetch_sos_2026.py to generate 2026 SOS data.")
 
     with tabs[6]:
-        st.markdown('<div class="section-label">// 2026 ESPN MOCK DRAFT BOARD · 12-TEAM PPR · ADP ORDER</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-label">// 2026 MOCK DRAFT BOARD · FANTASYPROS PPR ADP · 12-TEAM</div>', unsafe_allow_html=True)
         if not mock_board.empty:
-            pos_options = ["ALL", "QB", "RB", "WR", "TE", "K", "DST"]
+            pos_options = ["ALL","QB","RB","WR","TE","K","DST"]
             c1, c2 = st.columns([2, 1])
             with c1:
                 mock_search = st.text_input("🔍  SEARCH PLAYER", key="mock_search", placeholder="e.g. Josh Allen, CMC...")
             with c2:
                 mock_pos = st.selectbox("FILTER BY POSITION", pos_options, key="mock_pos")
-
             mb = mock_board.copy()
             mb["pick_label"] = mb.apply(lambda r: f"{int(r['round'])}.{int(r['pick_in_round']):02d}", axis=1)
             if mock_pos != "ALL":
@@ -449,25 +427,12 @@ if show_2026:
             if mock_search:
                 mask = mb.apply(lambda col: col.astype(str).str.contains(mock_search, case=False)).any(axis=1)
                 mb = mb[mask]
-
-            POS_COLORS = {
-                "QB": "#4fc3f7", "RB": "#81c784", "WR": "#ff8a65",
-                "TE": "#ce93d8", "K": "#fff176", "DST": "#90a4ae",
-            }
-
+            POS_COLORS = {"QB":"#4fc3f7","RB":"#81c784","WR":"#ff8a65","TE":"#ce93d8","K":"#fff176","DST":"#90a4ae"}
             def style_pos(val):
                 color = POS_COLORS.get(val, "#c8d6e0")
                 return f"color: {color}; font-weight: bold;"
-
-            display = mb[["pick_label","player","position","team"]].rename(columns={
-                "pick_label": "Pick", "player": "Player",
-                "position": "Pos", "team": "Team"
-            })
-
-            st.dataframe(
-                display.style.map(style_pos, subset=["Pos"]),
-                use_container_width=True, height=700, hide_index=True
-            )
+            display = mb[["pick_label","player","position","team"]].rename(columns={"pick_label":"Pick","player":"Player","position":"Pos","team":"Team"})
+            st.dataframe(display.style.map(style_pos, subset=["Pos"]), use_container_width=True, height=700, hide_index=True)
             st.caption(f"// {len(mb)} players shown · FantasyPros PPR ADP 2026 · 12-team linear draft order")
         else:
             st.warning("Run create_mock_board.py to generate the mock board.")
@@ -475,92 +440,267 @@ if show_2026:
     with tabs[7]:
         st.markdown('<div class="section-label">// DRAFT NOTES · 2026 SEASON</div>', unsafe_allow_html=True)
 
-        draft_page = st.radio("", ["Must Drafts & Must Avoids", "Target Picks"], horizontal=True, label_visibility="collapsed", key="draft_notes_page")
+        draft_page = st.radio("", ["Must Drafts & Must Avoids", "Target Picks", "Undervalued Players"], horizontal=True, label_visibility="collapsed", key="draft_notes_page")
 
         if draft_page == "Must Drafts & Must Avoids":
             MUST_DRAFT = {
-                "Early Round Must Draft (1-3)": [
-                    "Omarion Hampton", "Ashton Jeanty",
-                    "Malik Nabers", "Chase Brown", "James Cook III", "Brock Bowers",
-                    "DeVonta Smith",
-                ],
-                "Mid Round Must Draft (4-7)": [
-                    "Ladd McConkey", "TreVeyon Henderson", "Cam Skattebo",
-                    "Christian Watson", "Emeka Egbuka", "Justin Herbert",
-                    "Harold Fannin Jr.", "Bhayshul Tuten", "DJ Moore",
-                ],
-                "Late Round Must Draft (8+)": [
-                    "Tucker Kraft", "Josh Downs", "Matthew Golden",
-                    "Jadarian Price", "Kyle Monangai", "George Kittle",
-                ],
+                "Early Round Must Draft (1-3)": ["Omarion Hampton","Ashton Jeanty","Malik Nabers","Chase Brown","James Cook III","Brock Bowers","DeVonta Smith"],
+                "Mid Round Must Draft (4-7)":   ["Ladd McConkey","TreVeyon Henderson","Cam Skattebo","Christian Watson","Emeka Egbuka","Justin Herbert","Harold Fannin Jr.","Bhayshul Tuten","DJ Moore"],
+                "Late Round Must Draft (8+)":   ["Tucker Kraft","Josh Downs","Matthew Golden","Jadarian Price","Kyle Monangai","George Kittle"],
             }
-
             MUST_AVOID = {
-                "Early Round Must Avoid (1-3)": [
-                    "Trey McBride", "De'Von Achane", "Christian McCaffrey",
-                    "Jeremiyah Love", "George Pickens",
-                ],
-                "Mid Round Must Avoid (4-7)": [
-                    "Davante Adams", "Tyler Warren", "Bucky Irving",
-                ],
-                "Late Round Must Avoid (8+)": [
-                    "Dallas Goedert", "Khalil Shakir",
-                    "Jacory Croskey-Merritt", "Calvin Ridley",
-                ],
+                "Early Round Must Avoid (1-3)": ["Trey McBride","De'Von Achane","Christian McCaffrey","Jeremiyah Love","George Pickens"],
+                "Mid Round Must Avoid (4-7)":   ["Davante Adams","Tyler Warren","Bucky Irving"],
+                "Late Round Must Avoid (8+)":   ["Dallas Goedert","Khalil Shakir","Jacory Croskey-Merritt","Calvin Ridley"],
             }
-
             col1, col2 = st.columns(2)
-
             with col1:
                 st.markdown('<div style="font-family:Share Tech Mono,monospace;font-size:0.8rem;color:#00cc44;letter-spacing:0.15em;margin-bottom:1rem;">// MUST DRAFTS</div>', unsafe_allow_html=True)
                 for category, players in MUST_DRAFT.items():
                     st.markdown(f'<div style="font-family:Share Tech Mono,monospace;font-size:0.7rem;color:#7a2a5a;letter-spacing:0.12em;margin-top:1rem;margin-bottom:0.4rem;border-bottom:1px solid #2a0a1a;padding-bottom:0.2rem;">{category.upper()}</div>', unsafe_allow_html=True)
                     for p in players:
                         st.markdown(f'<div style="padding:0.4rem 0.6rem;margin:0.2rem 0;background:#0a1f0a;border-left:3px solid #00cc44;font-size:0.85rem;color:#c8d6e0;">✦ {p}</div>', unsafe_allow_html=True)
-
             with col2:
                 st.markdown('<div style="font-family:Share Tech Mono,monospace;font-size:0.8rem;color:#ff3333;letter-spacing:0.15em;margin-bottom:1rem;">// MUST AVOIDS</div>', unsafe_allow_html=True)
                 for category, players in MUST_AVOID.items():
                     st.markdown(f'<div style="font-family:Share Tech Mono,monospace;font-size:0.7rem;color:#7a2a5a;letter-spacing:0.12em;margin-top:1rem;margin-bottom:0.4rem;border-bottom:1px solid #2a0a1a;padding-bottom:0.2rem;">{category.upper()}</div>', unsafe_allow_html=True)
                     for p in players:
                         st.markdown(f'<div style="padding:0.4rem 0.6rem;margin:0.2rem 0;background:#1f0a0a;border-left:3px solid #ff3333;font-size:0.85rem;color:#c8d6e0;">✗ {p}</div>', unsafe_allow_html=True)
-
             st.markdown('<div style="font-family:Share Tech Mono,monospace;font-size:0.65rem;color:#7a2a5a;margin-top:1.5rem;">// Numbers in parentheses indicate suggested draft round · PPR scoring</div>', unsafe_allow_html=True)
 
-        else:
+        elif draft_page == "Target Picks":
             TARGET_PICKS = {
-                "Round 1":  ["Bijan Robinson", "Jahmyr Gibbs", "Puka Nacua", "James Cook III"],
-                "Round 2":  ["Omarion Hampton", "Malik Nabers", "Chase Brown", "Brock Bowers"],
-                "Round 3":  ["Javonte Williams", "Tetairoa McMillan", "DeVonta Smith"],
-                "Round 4":  ["Cam Skattebo", "Ladd McConkey", "Terry McLaurin", "Emeka Egbuka"],
-                "Round 5":  ["Rome Odunze", "DJ Moore", "Bhayshul Tuten", "Quinshon Judkins", "Mike Evans"],
-                "Round 6":  ["Parker Washington", "Christian Watson", "Jalen Hurts", "Carnell Tate"],
-                "Round 7":  ["Justin Herbert", "Harold Fannin Jr.", "Dak Prescott", "Tucker Kraft"],
-                "Round 8":  ["Tucker Kraft", "Sam LaPorta", "Michael Wilson"],
-                "Round 9":  ["J.K. Dobbins", "Michael Pittman Jr.", "Kenneth Gainwell", "Josh Downs"],
-                "Round 10": ["Matthew Golden", "George Kittle"],
-                "Round 11": ["KC Concepcion", "Aaron Jones Sr.", "Isaiah Likely"],
+                "Round 1":  ["Bijan Robinson","Jahmyr Gibbs","Puka Nacua","James Cook III"],
+                "Round 2":  ["Omarion Hampton","Malik Nabers","Chase Brown","Brock Bowers"],
+                "Round 3":  ["Javonte Williams","Tetairoa McMillan","DeVonta Smith"],
+                "Round 4":  ["Cam Skattebo","Ladd McConkey","Terry McLaurin","Emeka Egbuka"],
+                "Round 5":  ["Rome Odunze","DJ Moore","Bhayshul Tuten","Quinshon Judkins","Mike Evans"],
+                "Round 6":  ["Parker Washington","Christian Watson","Jalen Hurts","Carnell Tate"],
+                "Round 7":  ["Justin Herbert","Harold Fannin Jr.","Dak Prescott","Tucker Kraft"],
+                "Round 8":  ["Tucker Kraft","Sam LaPorta","Michael Wilson"],
+                "Round 9":  ["J.K. Dobbins","Michael Pittman Jr.","Kenneth Gainwell","Josh Downs"],
+                "Round 10": ["Matthew Golden","George Kittle"],
+                "Round 11": ["KC Concepcion","Aaron Jones Sr.","Isaiah Likely"],
             }
-
             st.markdown('<div style="font-family:Share Tech Mono,monospace;font-size:0.8rem;color:#ff007f;letter-spacing:0.15em;margin-bottom:1.5rem;">// FAVORITE PICKS BY ROUND</div>', unsafe_allow_html=True)
-
             col1, col2 = st.columns(2)
             rounds = list(TARGET_PICKS.items())
             mid = (len(rounds) + 1) // 2
-
             for i, (rnd, players) in enumerate(rounds):
                 col = col1 if i < mid else col2
                 with col:
                     st.markdown(f'<div style="font-family:Share Tech Mono,monospace;font-size:0.7rem;color:#7a2a5a;letter-spacing:0.12em;margin-top:1rem;margin-bottom:0.4rem;border-bottom:1px solid #2a0a1a;padding-bottom:0.2rem;">{rnd.upper()}</div>', unsafe_allow_html=True)
                     for p in players:
                         st.markdown(f'<div style="padding:0.4rem 0.6rem;margin:0.2rem 0;background:#0d1a2e;border-left:3px solid #ff007f;font-size:0.85rem;color:#c8d6e0;">◆ {p}</div>', unsafe_allow_html=True)
-
             st.markdown('<div style="font-family:Share Tech Mono,monospace;font-size:0.65rem;color:#7a2a5a;margin-top:1.5rem;">// Target picks based on value vs ADP · PPR scoring</div>', unsafe_allow_html=True)
+
+        else:
+            UNDERVALUED = [
+                {
+                    "name": "Javonte Williams",
+                    "pos": "RB",
+                    "proj_rank": "RB18",
+                    "adp": "4.01",
+                    "team": "DAL",
+                    "bullets": [
+                        "7th easiest SOS for 2026",
+                        "Improved offense & defense · no backfield competition",
+                    ],
+                    "stats_header": "2025 RANKINGS",
+                    "stats": [
+                        ("4th", "Opportunity Score"),
+                        ("7th", "Rush TD"),
+                        ("5th", "GL Carries"),
+                        ("1st", "GL Targets"),
+                        ("10th", "Carries"),
+                        ("7th", "Snap%"),
+                    ],
+                },
+                {
+                    "name": "Omarion Hampton",
+                    "pos": "RB",
+                    "proj_rank": "RB9",
+                    "adp": "2.03",
+                    "team": "LAC",
+                    "bullets": [
+                        "McDaniel's produced a top-3 fantasy RB each of the last 3 years",
+                        "Improved O-line · prime situation",
+                        "Averaged 20+ pts per game before injury",
+                    ],
+                    "stats_header": None,
+                    "stats": [],
+                },
+                {
+                    "name": "Rome Odunze",
+                    "pos": "WR",
+                    "proj_rank": "WR27",
+                    "adp": "5.09",
+                    "team": "CHI",
+                    "bullets": [
+                        "Injured mid-season — depressed ADP",
+                        "WR7 in expected PPG · 9th in Snap%",
+                    ],
+                    "stats_header": "WEEKS 1–4",
+                    "stats": [
+                        ("19.9", "Fantasy PPG"),
+                        ("8.8", "Targets/Game"),
+                    ],
+                },
+                {
+                    "name": "Parker Washington",
+                    "pos": "WR",
+                    "proj_rank": "WR35",
+                    "adp": "7.03",
+                    "team": "JAC",
+                    "bullets": [
+                        "OTA WR1 · Chris Godwin slot role",
+                        "Jags' leader in receptions & targets",
+                        "12th best YPRR at 2.57 yards",
+                    ],
+                    "stats_header": "WEEKS 9+",
+                    "stats": [
+                        ("17.4", "Fantasy PPG"),
+                        ("WR6", "Pace"),
+                        ("13th", "Overall Skills"),
+                    ],
+                },
+                {
+                    "name": "Emeka Egbuka",
+                    "pos": "WR",
+                    "proj_rank": "WR20",
+                    "adp": "4.06",
+                    "team": "TB",
+                    "bullets": [
+                        "Lowest catchable target % — massive upside",
+                    ],
+                    "stats_header": "2025 RANKINGS",
+                    "stats": [
+                        ("9th", "Targets"),
+                        ("15th", "YAC"),
+                        ("2nd", "Deep Targets"),
+                    ],
+                    "extra_header": "WEEKS 1–5 (W/O EVANS)",
+                    "extra_stats": [
+                        ("17.6", "Fantasy PPG"),
+                        ("WR3", "Pace"),
+                    ],
+                },
+                {
+                    "name": "Cam Skattebo",
+                    "pos": "RB",
+                    "proj_rank": "RB20",
+                    "adp": "4.09",
+                    "team": "NYG",
+                    "bullets": [
+                        "Improved coaching · no backfield competition",
+                    ],
+                    "stats_header": "8 GAMES IN 2025",
+                    "stats": [
+                        ("12.6", "Carries/Game"),
+                        ("16", "Fantasy PPG"),
+                        ("6", "TDs"),
+                        ("9th", "By RBs"),
+                    ],
+                },
+            ]
+
+            POS_CLR_UV = {"RB": "#81c784", "WR": "#ff8a65"}
+            GOLD = "#ff007f"
+
+            st.markdown(
+                f'<div style="font-family:Share Tech Mono,monospace;font-size:0.8rem;'
+                f'color:{GOLD};letter-spacing:0.15em;margin-bottom:1.5rem;">'
+                f'// UNDERVALUED PLAYERS · 2026 TARGETS</div>',
+                unsafe_allow_html=True
+            )
+
+            cols = st.columns(2)
+            for i, p in enumerate(UNDERVALUED):
+                pos_color = POS_CLR_UV.get(p["pos"], "#c8d6e0")
+
+                # Build stat pills HTML
+                def stat_pills(stats):
+                    pills = ""
+                    for val, label in stats:
+                        pills += (
+                            f'<span style="display:inline-flex;align-items:center;gap:4px;'
+                            f'background:#1a2535;border:1px solid #2a3545;border-radius:3px;'
+                            f'padding:3px 8px;margin:3px 3px 3px 0;font-size:0.7rem;white-space:nowrap;">'
+                            f'<span style="color:{GOLD};font-weight:700;font-family:Share Tech Mono,monospace;">{val}</span>'
+                            f'<span style="color:#8a9ab0;">{label}</span>'
+                            f'</span>'
+                        )
+                    return pills
+
+                bullets_html = "".join(
+                    f'<div style="display:flex;gap:6px;margin-bottom:5px;">'
+                    f'<span style="color:{GOLD};margin-top:1px;flex-shrink:0;">◆</span>'
+                    f'<span style="color:#c8d6e0;font-size:0.82rem;line-height:1.5;">{b}</span>'
+                    f'</div>'
+                    for b in p["bullets"]
+                )
+
+                stats_html = ""
+                if p.get("stats_header") and p.get("stats"):
+                    stats_html += (
+                        f'<div style="font-family:Share Tech Mono,monospace;font-size:0.65rem;'
+                        f'color:#7a2a5a;letter-spacing:0.15em;margin:10px 0 6px 0;">'
+                        f'// {p["stats_header"]}</div>'
+                        f'<div style="display:flex;flex-wrap:wrap;gap:0;">{stat_pills(p["stats"])}</div>'
+                    )
+
+                extra_html = ""
+                if p.get("extra_header") and p.get("extra_stats"):
+                    extra_html += (
+                        f'<div style="font-family:Share Tech Mono,monospace;font-size:0.65rem;'
+                        f'color:#7a2a5a;letter-spacing:0.15em;margin:10px 0 6px 0;">'
+                        f'// {p["extra_header"]}</div>'
+                        f'<div style="display:flex;flex-wrap:wrap;gap:0;">{stat_pills(p.get("extra_stats", []))}</div>'
+                    )
+
+                card_html = f"""
+<div style="background:#0a1020;border:1px solid #1e2d45;border-top:3px solid {GOLD};
+border-radius:4px;padding:16px;margin-bottom:16px;position:relative;">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;">
+    <div>
+      <div style="font-family:Share Tech Mono,monospace;font-size:1.1rem;color:#e8f0f8;
+        font-weight:700;letter-spacing:0.05em;margin-bottom:4px;">{p['name']}</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="background:{pos_color}22;border:1px solid {pos_color}55;color:{pos_color};
+          font-family:Share Tech Mono,monospace;font-size:0.65rem;padding:2px 7px;
+          border-radius:2px;font-weight:700;">{p['pos']} · {p['team']}</span>
+      </div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-family:Share Tech Mono,monospace;font-size:0.65rem;
+        color:#7a2a5a;letter-spacing:0.1em;margin-bottom:2px;">PROJ VALUE</div>
+      <div style="font-family:Share Tech Mono,monospace;font-size:1rem;
+        color:{GOLD};font-weight:700;">{p['proj_rank']}</div>
+      <div style="font-family:Share Tech Mono,monospace;font-size:0.75rem;
+        color:#8a9ab0;">Rd {p['adp']}</div>
+    </div>
+  </div>
+  <div style="border-top:1px solid #1e2d45;padding-top:10px;">
+    {bullets_html}
+  </div>
+  {stats_html}
+  {extra_html}
+</div>
+"""
+                with cols[i % 2]:
+                    st.markdown(card_html, unsafe_allow_html=True)
+
+            st.markdown(
+                '<div style="font-family:Share Tech Mono,monospace;font-size:0.65rem;'
+                'color:#7a2a5a;margin-top:0.5rem;">'
+                '// Projected value = consensus rank · ADP = draft round · PPR scoring</div>',
+                unsafe_allow_html=True
+            )
 
     with tabs[8]:
         st.markdown('<div class="section-label">// SOURCE COMPARISON · WHERE EXPERTS AGREE & DISAGREE</div>', unsafe_allow_html=True)
         if not master.empty:
-            pos_f = st.selectbox("POSITION", ["ALL", "QB", "RB", "WR", "TE"], key="src_pos")
+            pos_f = st.selectbox("POSITION", ["ALL","QB","RB","WR","TE"], key="src_pos")
             df_src = master.copy() if pos_f == "ALL" else master[master["position"] == pos_f].copy()
             ext_cols = [c for c in ["fc_rank","ffc_rank","fp_rank","espn_rank","rb_overall_rank","yahoo_rank"] if c in df_src.columns and df_src[c].notna().sum() > 3]
             if ext_cols:
@@ -580,7 +720,7 @@ if show_2026:
 
 # ── 2024 / 2025 VIEW ──────────────────────────────────────────────────────────
 else:
-    tabs = st.tabs(["⬡  QB", "⬡  RB", "⬡  WR", "⬡  TE", "⬡  TEAM SPLITS", "⬡  SOS", "⬡  OPP SCORE", "⬡  PLAYER PROFILE"])
+    tabs = st.tabs(["⬡  QB","⬡  RB","⬡  WR","⬡  TE","⬡  TEAM SPLITS","⬡  SOS","⬡  OPP SCORE","⬡  PLAYER PROFILE"])
 
     with tabs[0]:
         st.markdown(f'<div class="section-label">// QUARTERBACK RANKINGS · {season} · MIN 5 GAMES</div>', unsafe_allow_html=True)
@@ -658,43 +798,23 @@ else:
     # ── OPP SCORE TAB ─────────────────────────────────────────────────────────
     with tabs[6]:
         st.markdown(f'<div class="section-label">// OPPORTUNITY SCORE · 2025 · TOP 50 PER POSITION</div>', unsafe_allow_html=True)
-
         if season == 2025:
-            st.markdown(
-                '<div style="font-family:Share Tech Mono,monospace;font-size:0.65rem;color:#7a2a5a;margin-bottom:1.2rem;line-height:1.8;">'
-                '// Opportunity Score = expected PPR pts based on touch quality (RZ targets, routes, snap share). '
-                'Higher = more high-value work. Compare AVG OPP vs OPP FPTS to spot over/underperformers.'
-                '</div>',
-                unsafe_allow_html=True
-            )
-
-            opp_pos_tabs = st.tabs(["⬡  RB", "⬡  WR", "⬡  TE"])
-
-            for tab_idx, pos in enumerate(["RB", "WR", "TE"]):
+            st.markdown('<div style="font-family:Share Tech Mono,monospace;font-size:0.65rem;color:#7a2a5a;margin-bottom:1.2rem;line-height:1.8;">// Opportunity Score = expected PPR pts based on touch quality (RZ targets, routes, snap share). Higher = more high-value work. Compare AVG OPP vs OPP FPTS to spot over/underperformers.</div>', unsafe_allow_html=True)
+            opp_pos_tabs = st.tabs(["⬡  RB","⬡  WR","⬡  TE"])
+            for tab_idx, pos in enumerate(["RB","WR","TE"]):
                 with opp_pos_tabs[tab_idx]:
                     df_opp = build_opp_df(OPP_SCORE_DATA[pos])
-
-                    # Sort controls
                     c1, c2 = st.columns([3, 1])
                     with c1:
-                        sort_col_opp = st.selectbox(
-                            "SORT BY",
-                            ["AVG OPP", "AVG (L4)", "TOTAL OPP", "OPP FPTS", "RK"],
-                            key=f"opp_sort_{pos}"
-                        )
+                        sort_col_opp = st.selectbox("SORT BY", ["AVG OPP","AVG (L4)","TOTAL OPP","OPP FPTS","RK"], key=f"opp_sort_{pos}")
                     with c2:
-                        asc_opp = st.selectbox("ORDER", ["↓ High→Low", "↑ Low→High"], key=f"opp_asc_{pos}")
-
+                        asc_opp = st.selectbox("ORDER", ["↓ High→Low","↑ Low→High"], key=f"opp_asc_{pos}")
                     sort_asc_opp = (asc_opp == "↑ Low→High")
                     df_sorted = df_opp.copy()
                     if sort_col_opp in df_sorted.columns:
-                        df_sorted = df_sorted.sort_values(
-                            sort_col_opp, ascending=sort_asc_opp,
-                            key=lambda x: pd.to_numeric(x, errors="coerce")
-                        ).reset_index(drop=True)
-
-                    # Apply color gradient to numeric summary columns (no matplotlib needed)
-                    grad_cols = ["AVG (L4)", "AVG OPP", "TOTAL OPP", "OPP FPTS"]
+                        df_sorted = df_sorted.sort_values(sort_col_opp, ascending=sort_asc_opp,
+                                                          key=lambda x: pd.to_numeric(x, errors="coerce")).reset_index(drop=True)
+                    grad_cols = ["AVG (L4)","AVG OPP","TOTAL OPP","OPP FPTS"]
 
                     def color_opp(val, col_min, col_max):
                         try:
@@ -714,154 +834,102 @@ else:
                         styled = styled.map(lambda v, mn=col_min, mx=col_max: color_opp(v, mn, mx), subset=[col])
 
                     st.dataframe(styled, use_container_width=True, height=620, hide_index=True)
-                    st.caption(
-                        f"// Top 50 {pos}s · AVG OPP = season avg opp score · AVG (L4) = last 4 games avg · "
-                        f"OPP FPTS = actual PPR pts · BYE = bye week · SUS = suspended · — = did not play"
-                    )
+                    st.caption(f"// Top 50 {pos}s · AVG OPP = season avg opp score · AVG (L4) = last 4 games avg · OPP FPTS = actual PPR pts · BYE = bye week · SUS = suspended · — = did not play")
         else:
             st.info("Opportunity Score data is only available for the **2025** season. Switch the season selector above to view.")
 
     # ── PLAYER PROFILE TAB ────────────────────────────────────────────────────
     with tabs[7]:
         st.markdown(f'<div class="section-label">// PLAYER PROFILE · {season} SEASON</div>', unsafe_allow_html=True)
-
         player_info = load_player_info()
         gamelogs    = load_gamelogs(season)
-
         all_players = []
         for pos in ["QB","RB","WR","TE"]:
             df_pos = data[pos]
             if not df_pos.empty and "player_display_name" in df_pos.columns:
                 all_players.extend(df_pos["player_display_name"].tolist())
         all_players = sorted(set(all_players))
-
         selected = st.selectbox("SELECT PLAYER", ["— choose a player —"] + all_players, key="profile_player")
-
         if selected and selected != "— choose a player —":
-            player_row = None
-            player_pos = None
+            player_row = None; player_pos = None
             for pos in ["QB","RB","WR","TE"]:
                 df_pos = data[pos]
                 if not df_pos.empty and "player_display_name" in df_pos.columns:
                     match = df_pos[df_pos["player_display_name"] == selected]
                     if not match.empty:
-                        player_row = match.iloc[0]
-                        player_pos = pos
-                        break
-
+                        player_row = match.iloc[0]; player_pos = pos; break
             if player_row is not None:
-                age = "N/A"
-                headshot = None
+                age = "N/A"; headshot = None
                 if not player_info.empty:
                     info_match = player_info[player_info["player_display_name"] == selected]
                     if not info_match.empty:
                         age_val = info_match.iloc[0].get("age")
                         age = int(age_val) if pd.notna(age_val) else "N/A"
                         headshot = info_match.iloc[0].get("headshot_url")
-
                 col_img, col_info = st.columns([1, 3])
                 with col_img:
                     if headshot and pd.notna(headshot):
                         st.image(headshot, width=140)
                     else:
                         st.markdown('<div style="width:140px;height:140px;background:#1a2a1a;border:1px solid #ff007f;display:flex;align-items:center;justify-content:center;font-size:2rem">🏈</div>', unsafe_allow_html=True)
-
                 with col_info:
                     team  = player_row.get("recent_team","N/A")
                     games = int(player_row.get("games", 0))
                     total_pts = round(player_row.get("fantasy_points_ppr", 0), 1)
                     fppg      = round(player_row.get("fppg_ppr", 0), 2)
-
                     st.markdown(f"""
 <div style="font-family:'Share Tech Mono',monospace;">
   <div style="font-size:1.8rem;color:#ff007f;font-weight:bold;">{selected}</div>
-  <div style="font-size:0.9rem;color:#c8d6e0;margin-top:0.3rem;">
-    {player_pos} · {team} · Age: {age}
-  </div>
+  <div style="font-size:0.9rem;color:#c8d6e0;margin-top:0.3rem;">{player_pos} · {team} · Age: {age}</div>
   <div style="display:flex;gap:2rem;margin-top:1rem;">
-    <div>
-      <div style="font-size:1.4rem;color:#ff007f;">{total_pts}</div>
-      <div style="font-size:0.65rem;color:#7a2a5a;letter-spacing:0.15em;">TOTAL PPR PTS</div>
-    </div>
-    <div>
-      <div style="font-size:1.4rem;color:#ff007f;">{fppg}</div>
-      <div style="font-size:0.65rem;color:#7a2a5a;letter-spacing:0.15em;">FPPG (PPR)</div>
-    </div>
-    <div>
-      <div style="font-size:1.4rem;color:#ff007f;">{games}</div>
-      <div style="font-size:0.65rem;color:#7a2a5a;letter-spacing:0.15em;">GAMES PLAYED</div>
-    </div>
+    <div><div style="font-size:1.4rem;color:#ff007f;">{total_pts}</div><div style="font-size:0.65rem;color:#7a2a5a;letter-spacing:0.15em;">TOTAL PPR PTS</div></div>
+    <div><div style="font-size:1.4rem;color:#ff007f;">{fppg}</div><div style="font-size:0.65rem;color:#7a2a5a;letter-spacing:0.15em;">FPPG (PPR)</div></div>
+    <div><div style="font-size:1.4rem;color:#ff007f;">{games}</div><div style="font-size:0.65rem;color:#7a2a5a;letter-spacing:0.15em;">GAMES PLAYED</div></div>
   </div>
-</div>
-""", unsafe_allow_html=True)
-
+</div>""", unsafe_allow_html=True)
                 st.markdown("<br>", unsafe_allow_html=True)
                 st.markdown('<div class="section-label">// GAME LOG</div>', unsafe_allow_html=True)
-
                 if not gamelogs.empty:
                     player_log = gamelogs[gamelogs["player_display_name"] == selected].copy()
                     if not player_log.empty:
                         player_log = player_log.sort_values("week").reset_index(drop=True)
-
                         avg_ppr = fppg
                         boom_threshold = avg_ppr * 1.5
                         bust_threshold = avg_ppr * 0.5
-
                         def classify(pts):
                             if pd.isna(pts): return "—"
                             if pts >= boom_threshold: return "BOOM"
                             if pts <= bust_threshold: return "BUST"
                             return "AVG"
-
                         player_log["result"] = player_log["fantasy_points_ppr"].apply(classify)
-
                         boom_count = (player_log["result"] == "BOOM").sum()
                         bust_count = (player_log["result"] == "BUST").sum()
                         avg_count  = (player_log["result"] == "AVG").sum()
-
                         bc1, bc2, bc3, bc4 = st.columns(4)
-                        with bc1:
-                            st.markdown(f'<div class="stat-card" style="border-left-color:#00cc44"><div class="stat-card-value" style="color:#00cc44">{boom_count}</div><div class="stat-card-label">BOOM games (≥{boom_threshold:.1f} pts)</div></div>', unsafe_allow_html=True)
-                        with bc2:
-                            st.markdown(f'<div class="stat-card" style="border-left-color:#ff3333"><div class="stat-card-value" style="color:#ff3333">{bust_count}</div><div class="stat-card-label">BUST games (≤{bust_threshold:.1f} pts)</div></div>', unsafe_allow_html=True)
-                        with bc3:
-                            st.markdown(f'<div class="stat-card"><div class="stat-card-value">{avg_count}</div><div class="stat-card-label">AVG games</div></div>', unsafe_allow_html=True)
+                        with bc1: st.markdown(f'<div class="stat-card" style="border-left-color:#00cc44"><div class="stat-card-value" style="color:#00cc44">{boom_count}</div><div class="stat-card-label">BOOM games (≥{boom_threshold:.1f} pts)</div></div>', unsafe_allow_html=True)
+                        with bc2: st.markdown(f'<div class="stat-card" style="border-left-color:#ff3333"><div class="stat-card-value" style="color:#ff3333">{bust_count}</div><div class="stat-card-label">BUST games (≤{bust_threshold:.1f} pts)</div></div>', unsafe_allow_html=True)
+                        with bc3: st.markdown(f'<div class="stat-card"><div class="stat-card-value">{avg_count}</div><div class="stat-card-label">AVG games</div></div>', unsafe_allow_html=True)
                         with bc4:
                             boom_rate = f"{boom_count/len(player_log)*100:.0f}%" if len(player_log) > 0 else "—"
                             st.markdown(f'<div class="stat-card"><div class="stat-card-value">{boom_rate}</div><div class="stat-card-label">BOOM rate</div></div>', unsafe_allow_html=True)
-
                         st.markdown(f'<div style="font-family:Share Tech Mono,monospace;font-size:0.65rem;color:#7a2a5a;margin-bottom:0.5rem;">// BOOM = ≥1.5x avg ({boom_threshold:.1f} pts) · BUST = ≤0.5x avg ({bust_threshold:.1f} pts) · based on {avg_ppr:.1f} FPPG season avg</div>', unsafe_allow_html=True)
-
                         base_cols = ["week","opponent_team","fantasy_points_ppr","result"]
                         if player_pos == "QB":
-                            extra = ["completions","attempts","passing_yards","passing_tds",
-                                     "interceptions","carries","rushing_yards","rushing_tds","sacks"]
+                            extra = ["completions","attempts","passing_yards","passing_tds","interceptions","carries","rushing_yards","rushing_tds","sacks"]
                         elif player_pos == "RB":
-                            extra = ["carries","rushing_yards","rushing_tds",
-                                     "receptions","targets","receiving_yards","receiving_tds"]
+                            extra = ["carries","rushing_yards","rushing_tds","receptions","targets","receiving_yards","receiving_tds"]
                         else:
                             extra = ["receptions","targets","receiving_yards","receiving_tds"]
-
                         show_cols = base_cols + [c for c in extra if c in player_log.columns]
                         display_log = player_log[[c for c in show_cols if c in player_log.columns]].copy()
                         if "fantasy_points_ppr" in display_log.columns:
                             display_log["fantasy_points_ppr"] = display_log["fantasy_points_ppr"].apply(lambda x: f"{x:.2f}" if pd.notna(x) else "—")
-
-                        gl_labels = {
-                            "week":"Week","opponent_team":"Opp","fantasy_points_ppr":"PPR Pts",
-                            "result":"Result","completions":"Comp","attempts":"Att",
-                            "passing_yards":"Pass Yds","passing_tds":"Pass TD","interceptions":"INT",
-                            "carries":"Car","rushing_yards":"Rush Yds","rushing_tds":"Rush TD",
-                            "receptions":"Rec","targets":"Tgt","receiving_yards":"Rec Yds",
-                            "receiving_tds":"Rec TD","sacks":"Sacks",
-                        }
+                        gl_labels = {"week":"Week","opponent_team":"Opp","fantasy_points_ppr":"PPR Pts","result":"Result","completions":"Comp","attempts":"Att","passing_yards":"Pass Yds","passing_tds":"Pass TD","interceptions":"INT","carries":"Car","rushing_yards":"Rush Yds","rushing_tds":"Rush TD","receptions":"Rec","targets":"Tgt","receiving_yards":"Rec Yds","receiving_tds":"Rec TD","sacks":"Sacks"}
                         display_log = display_log.rename(columns=gl_labels)
-
                         def color_result(val):
                             if val == "BOOM": return "background-color: #0a2e0a; color: #00cc44; font-weight: bold;"
                             if val == "BUST": return "background-color: #2e0a0a; color: #ff3333; font-weight: bold;"
                             return "color: #c8d6e0;"
-
                         def color_pts(val):
                             try:
                                 v = float(str(val).replace("—",""))
@@ -869,13 +937,11 @@ else:
                                 if v <= bust_threshold: return "color: #ff3333; font-weight: bold;"
                             except: pass
                             return "color: #c8d6e0;"
-
                         styled = display_log.style
                         if "Result" in display_log.columns:
                             styled = styled.map(color_result, subset=["Result"])
                         if "PPR Pts" in display_log.columns:
                             styled = styled.map(color_pts, subset=["PPR Pts"])
-
                         st.dataframe(styled, use_container_width=True, hide_index=True)
                         st.caption(f"// {len(player_log)} games · Season total PPR: {player_log['fantasy_points_ppr'].sum():.1f}")
                     else:
