@@ -336,13 +336,15 @@ def prep_position_df(df, pos):
     if df.empty:
         return df
     d = df.copy()
+    def col(name):
+        return d[name].fillna(0) if name in d.columns else 0
     if pos == "QB":
-        d["total_tds"] = d.get("passing_tds", 0).fillna(0) + d.get("rushing_tds", 0).fillna(0)
+        d["total_tds"] = col("passing_tds") + col("rushing_tds")
         keep = ["player_display_name", "recent_team", "games", "fantasy_points_ppr",
                 "fppg_ppr", "passing_yards", "total_tds", "interceptions"]
     else:
-        d["total_yards"] = d.get("rushing_yards", 0).fillna(0) + d.get("receiving_yards", 0).fillna(0)
-        d["total_tds"] = d.get("rushing_tds", 0).fillna(0) + d.get("receiving_tds", 0).fillna(0)
+        d["total_yards"] = col("rushing_yards") + col("receiving_yards")
+        d["total_tds"] = col("rushing_tds") + col("receiving_tds")
         keep = ["player_display_name", "recent_team", "games", "fantasy_points_ppr",
                 "fppg_ppr", "total_yards", "total_tds"]
     keep = [c for c in keep if c in d.columns]
