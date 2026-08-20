@@ -166,9 +166,13 @@ COACHING_CHANGES = [
      "impact":"POSITIVE","note":"Kubiak's pass-friendly scheme from Seattle elevates Brock Bowers significantly. Ashton Jeanty's receiving role could expand.",
      "up":["Brock Bowers","Ashton Jeanty","Tre Tucker"],"down":[]},
     {"team":"MIA","full":"Miami Dolphins","out":"Mike McDaniel","new_hc":"Jeff Hafley",
-     "prev":"Green Bay Packers DC","style":"Defensive-minded · OC TBD",
-     "impact":"NEGATIVE","note":"McDaniel's elite WR-friendly scheme is gone. De'Von Achane and Jaylen Waddle both face real uncertainty until a new OC is named.",
+     "prev":"Green Bay Packers DC","style":"Defensive-minded · OC Bobby Slowik calling plays",
+     "impact":"NEGATIVE","note":"McDaniel's elite WR-friendly scheme is gone, replaced by Slowik under new HC Hafley. De'Von Achane and Jaylen Waddle both face real uncertainty in the new offense.",
      "up":[],"down":["De'Von Achane","Jaylen Waddle","Tyreek Hill"]},
+    {"team":"LAC","full":"Los Angeles Chargers","out":"Greg Roman (former playcaller)","new_hc":"Mike McDaniel",
+     "prev":"Miami Dolphins Head Coach (fired)","style":"WR-friendly · wide zone run game · play-action",
+     "impact":"POSITIVE","note":"McDaniel joins as offensive coordinator/play-caller under HC Jim Harbaugh — not a head coaching hire, but he brings the same scheme that made Miami's passing game explosive. Justin Herbert and the Chargers' receiving corps should benefit.",
+     "up":["Justin Herbert","Ladd McConkey"],"down":[]},
     {"team":"NYG","full":"New York Giants","out":"Brian Daboll","new_hc":"John Harbaugh",
      "prev":"Baltimore Ravens HC (18 seasons)","style":"Run-heavy · physical · 12 personnel",
      "impact":"POSITIVE","note":"Harbaugh's run-first identity is a major boost for Cam Skattebo. Malik Nabers' target share depends on the new OC hire.",
@@ -181,6 +185,85 @@ COACHING_CHANGES = [
      "prev":"New York Jets HC","style":"Defensive-minded · run-heavy tendencies",
      "impact":"NEUTRAL","note":"Saleh's defensive background leaves Cam Ward's passing game uncertain. Tony Pollard and Tyjae Spears could see run-heavy usage.",
      "up":["Tony Pollard","Tyjae Spears"],"down":["Cam Ward","Carnell Tate"]},
+]
+
+# ── 2026 OFFENSIVE PLAY CALLERS ─────────────────────────────────────────────────
+# rank, team, play caller (who actually calls plays), and the other titled coach/OC
+PLAY_CALLERS = [
+    (1,  "LA Rams",       "Sean McVay",             "Nate Scheelhaase (OC)"),
+    (2,  "San Francisco", "Kyle Shanahan",          "Klay Kubiak (OC)"),
+    (3,  "Chicago",       "Ben Johnson",            "Press Taylor (OC)"),
+    (4,  "Denver",        "Sean Payton",            "Davis Webb (OC)"),
+    (5,  "Jacksonville",  "Liam Coen",              "Grant Udinski (OC)"),
+    (6,  "New England",   "Josh McDaniels (OC)",    "Mike Vrabel"),
+    (7,  "Kansas City",   "Andy Reid",              "Eric Bieniemy (OC)"),
+    (8,  "Minnesota",     "Kevin O'Connell",        "Wes Phillips (OC)"),
+    (9,  "Green Bay",     "Matt LaFleur",           "Adam Stenavich (OC)"),
+    (10, "Indianapolis",  "Shane Steichen",         "Jim Bob Cooter (OC)"),
+    (11, "LA Chargers",   "Mike McDaniel (OC)",     "Jim Harbaugh"),
+    (12, "New Orleans",   "Kellen Moore",           "Doug Nussmeier (OC)"),
+    (13, "Dallas",        "Brian Schottenheimer",   "Klayton Adams (OC)"),
+    (14, "Las Vegas",     "Klint Kubiak",           "Andrew Janocko (OC)"),
+    (15, "Cleveland",     "Todd Monken",            "Travis Switzer (OC)"),
+    (16, "Tennessee",     "Brian Daboll (OC)",      "Robert Saleh"),
+    (17, "Buffalo",       "Joe Brady",              "Pete Carmichael (OC)"),
+    (18, "Cincinnati",    "Zac Taylor",             "Dan Pitcher (OC)"),
+    (19, "Carolina",      "Dave Canales",           "Brad Idzik (OC)"),
+    (20, "Atlanta",       "Tommy Rees (OC)",        "Kevin Stefanski"),
+    (21, "Tampa Bay",     "Zac Robinson (OC)",      "Todd Bowles"),
+    (22, "Pittsburgh",    "Mike McCarthy",          "Brian Angelichio (OC)"),
+    (23, "Houston",       "Nick Caley (OC)",        "DeMeco Ryans"),
+    (24, "Detroit",       "Drew Petzing (OC)",      "Dan Campbell"),
+    (25, "Seattle",       "Brian Fleury (OC)",      "Mike Macdonald"),
+    (26, "Arizona",       "Mike LaFleur",           "Nathaniel Hackett (OC)"),
+    (27, "Miami",         "Bobby Slowik (OC)",      "Jeff Hafley"),
+    (28, "Philadelphia",  "Sean Mannion (OC)",      "Nick Sirianni"),
+    (29, "Baltimore",     "Declan Doyle (OC)",      "Jesse Minter"),
+    (30, "Washington",    "David Blough (OC)",      "Dan Quinn"),
+    (31, "NY Jets",       "Frank Reich (OC)",       "Aaron Glenn"),
+    (32, "NY Giants",     "Matt Nagy (OC)",         "John Harbaugh"),
+]
+
+# ── 2026 O-LINE CONSENSUS RANKINGS ───────────────────────────────────────────────
+# rank, team abbr, team name, consensus avg score (lower = better; averaged across major preseason O-line rankings)
+OLINE_DATA = [
+    (1,  "DEN", "Broncos",     1.0),  (2,  "PHI", "Eagles",      2.5),
+    (3,  "LAR", "Rams",        3.8),  (4,  "CHI", "Bears",       4.5),
+    (5,  "TB",  "Buccaneers",  6.3),  (6,  "SF",  "49ers",       6.8),
+    (7,  "BUF", "Bills",       7.3),  (8,  "CAR", "Panthers",    8.0),
+    (9,  "LAC", "Chargers",   12.0),  (10, "IND", "Colts",      12.8),
+    (11, "ATL", "Falcons",   13.3),  (12, "MIN", "Vikings",    13.8),
+    (13, "NE",  "Patriots",  14.8),  (14, "SEA", "Seahawks",   14.8),
+    (15, "DAL", "Cowboys",   15.0),  (16, "DET", "Lions",      16.3),
+    (17, "NYJ", "Jets",      17.0),  (18, "NYG", "Giants",     17.5),
+    (19, "PIT", "Steelers",  18.0),  (20, "ARI", "Cardinals",  19.3),
+    (21, "KC",  "Chiefs",    19.3),  (22, "NO",  "Saints",     20.0),
+    (23, "JAX", "Jaguars",   21.0),  (24, "LV",  "Raiders",    21.5),
+    (25, "WAS", "Commanders",22.3),  (26, "BAL", "Ravens",     23.8),
+    (27, "GB",  "Packers",   28.0),  (28, "CIN", "Bengals",    28.5),
+    (29, "HOU", "Texans",    28.8),  (30, "MIA", "Dolphins",   29.5),
+    (31, "TEN", "Titans",    29.8),  (32, "CLE", "Browns",     30.5),
+]
+
+# ── 2025 O-LINE RUN BLOCK RATING (prior season's board, kept under the 2025 tab) ──
+# 2025 OL rank, team abbr, trend, cohesion (1-5), projected '26 rank, QB-runs flag
+OLINE_2025_DATA = [
+    (1,  "LAR", "down",  4, 4.5, False), (2,  "BUF", "down",  4, 4.5, True),
+    (3,  "CHI", "down",  4, 4.0, False), (4,  "DEN", "flat",  5, 5.0, True),
+    (5,  "IND", "flat",  4, 4.5, False), (6,  "SF",  "flat",  4, 4.0, False),
+    (7,  "JAX", "flat",  5, 4.0, True),  (8,  "DAL", "flat",  5, 4.0, False),
+    (9,  "MIN", "up",    4, 4.0, True),  (10, "SEA", "flat",  5, 3.5, False),
+    (11, "BAL", "down",  2, 3.0, True),  (12, "PIT", "up",    3, 3.5, False),
+    (13, "NE",  "flat",  4, 3.0, False), (14, "PHI", "flat",  5, 4.0, True),
+    (15, "DET", "flat",  3, 3.5, False), (16, "CAR", "down",  3, 3.0, False),
+    (17, "NYJ", "flat",  4, 3.0, False), (18, "NYG", "up",    4, 3.0, True),
+    (19, "CIN", "flat",  5, 3.0, False), (20, "GB",  "down",  3, 2.0, False),
+    (21, "ATL", "up",    4, 4.0, False), (22, "KC",  "flat",  4, 3.0, False),
+    (23, "ARI", "up",    2, 3.0, False), (24, "WAS", "down",  3, 2.0, True),
+    (25, "TEN", "flat",  3, 2.0, False), (26, "TB",  "up2",   5, 4.0, False),
+    (27, "CLE", "up",    1, 2.0, False), (28, "LV",  "up2",   3, 2.5, False),
+    (29, "HOU", "up",    2, 3.0, False), (30, "NO",  "up",    4, 3.0, True),
+    (31, "MIA", "up",    4, 2.5, True),  (32, "LAC", "up2",   2, 3.0, False),
 ]
 
 # ── DRAFT NOTES DATA (kept from prior build) ────────────────────────────────────
@@ -277,6 +360,7 @@ DCOL  = {"sortable": True, "resizable": True, "filter": False, "suppressMenu": T
 def make_grid(gid, records, col_defs, height=560):
     return dag.AgGrid(id=gid, rowData=records, columnDefs=col_defs,
                        defaultColDef=DCOL, dashGridOptions=DGRID,
+                       dangerously_allow_code=True,
                        className="ag-theme-alpine-dark",
                        style={"height": f"{height}px", "width": "100%"})
 
@@ -376,6 +460,8 @@ app.layout = html.Div([
                 dcc.Tab(label="WR", value="wr26", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="TE", value="te26", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="SOS", value="sos26", style=_ts(), selected_style=_tsa()),
+                dcc.Tab(label="Play Callers", value="playcallers", style=_ts(), selected_style=_tsa()),
+                dcc.Tab(label="O-Line", value="oline", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="Draft Notes", value="draft", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="Coaching", value="coaching", style=_ts(), selected_style=_tsa()),
             ], colors={"border": BORDER, "primary": ACCENT, "background": "transparent"},
@@ -392,6 +478,7 @@ app.layout = html.Div([
                 dcc.Tab(label="TE", value="te-h", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="Team Splits", value="splits", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="SOS", value="sos-h", style=_ts(), selected_style=_tsa()),
+                dcc.Tab(label="O-Line", value="oline-h", style=_ts(), selected_style=_tsa()),
             ], colors={"border": BORDER, "primary": ACCENT, "background": "transparent"},
                style={"borderBottom": f"1px solid {BORDER}"}),
             html.Div(id="chist", style={"paddingTop": "18px"}),
@@ -479,6 +566,12 @@ def render_2026(tab):
             html.Div(id="draft-c", children=_render_must()),
         ])
 
+    if tab == "playcallers":
+        return _render_playcallers()
+
+    if tab == "oline":
+        return _render_oline()
+
     if tab == "coaching":
         return _render_coaching()
 
@@ -530,6 +623,9 @@ def render_hist(tab, season_str):
                 clearable=False, style=dd_style())),
             html.Div(id="sos-h-c", style={"marginTop": "14px"}),
         ])
+
+    if tab == "oline-h":
+        return _render_oline_hist(season_str)
 
     return html.Div()
 
@@ -624,6 +720,80 @@ def toggle_draft(nm, nt, nu):
     if t == "btn-target": return _render_target(), "toggle-btn", "toggle-btn active", "toggle-btn"
     if t == "btn-uv": return _render_uv(), "toggle-btn", "toggle-btn", "toggle-btn active"
     return _render_must(), "toggle-btn active", "toggle-btn", "toggle-btn"
+
+# ── PLAY CALLERS ──────────────────────────────────────────────────────────────
+def _render_playcallers():
+    records = [{"Rk": r, "Team": t, "Play Caller": pc, "Coach / OC": co} for r, t, pc, co in PLAY_CALLERS]
+    defs = [
+        {"field": "Rk", "headerName": "#", "pinned": "left", "width": 60, "minWidth": 60, "flex": 0,
+         "sortable": True, "cellStyle": {"color": TFAINT, "fontFamily": FONT_MONO}},
+        {"field": "Team", "headerName": "Team", "width": 160, "minWidth": 160, "flex": 0, "sortable": True,
+         "cellStyle": {"fontWeight": "700", "color": TEXT}},
+        {"field": "Play Caller", "headerName": "Play Caller", "flex": 1, "minWidth": 180, "sortable": True,
+         "cellStyle": {"color": ACCENT, "fontWeight": "600"}},
+        {"field": "Coach / OC", "headerName": "Coach / OC", "flex": 1, "minWidth": 180, "sortable": True,
+         "cellStyle": {"color": TDIM}},
+    ]
+    return html.Div([
+        sec("2026 Offensive Play Callers",
+            sub="Who actually calls plays for each team — the highlighted name. Click a column to sort."),
+        make_grid("g-playcallers", records, defs, 760),
+    ])
+
+# ── O-LINE ────────────────────────────────────────────────────────────────────
+def _trend_arrow(t):
+    return {"up": ("↑", GREEN), "up2": ("↑↑", GREEN), "down": ("↓", RED), "flat": ("–", TFAINT)}[t]
+
+def _render_oline_hist(season_str):
+    if season_str != "2025":
+        return html.Div([sec(f"O-Line Run Block Rating · {season_str}"),
+                          empty_msg("O-Line run block ratings are only tracked for the 2025 board.")])
+    records = []
+    for rk, team, trend, cohesion, rank26, qb_runs in OLINE_2025_DATA:
+        sym, _ = _trend_arrow(trend)
+        records.append({"Rk": rk, "Team": team, "Trend": sym, "Cohesion": cohesion,
+                         "26 Rank": rank26, "QB Runs": "✓" if qb_runs else "—"})
+    defs = [
+        {"field": "Rk", "headerName": "2025 OL", "pinned": "left", "width": 80, "minWidth": 80, "flex": 0,
+         "sortable": True, "cellStyle": {"color": TFAINT, "fontFamily": FONT_MONO}},
+        {"field": "Team", "headerName": "Team", "width": 90, "minWidth": 90, "flex": 0, "sortable": True,
+         "cellStyle": {"fontWeight": "700", "color": TEXT, "fontFamily": FONT_MONO}},
+        {"field": "Trend", "headerName": "Trend", "width": 90, "minWidth": 90, "flex": 0, "sortable": True,
+         "cellStyle": {"function": f"""(function(p){{
+             var m={{"↑":"{GREEN}","↑↑":"{GREEN}","↓":"{RED}","–":"{TFAINT}"}};
+             return {{color:m[p.value]||"{TFAINT}",fontWeight:"800",textAlign:"center"}};
+         }})(params)"""}},
+        {"field": "Cohesion", "headerName": "Cohesion", "flex": 1, "minWidth": 110, "sortable": True,
+         "cellStyle": heat_style("Cohesion")},
+        {"field": "26 Rank", "headerName": "26 Rank", "flex": 1, "minWidth": 110, "sortable": True,
+         "cellStyle": heat_style("26 Rank")},
+        {"field": "QB Runs", "headerName": "QB Runs", "width": 100, "minWidth": 100, "flex": 0, "sortable": True,
+         "cellStyle": {"color": ACCENT, "fontWeight": "700", "textAlign": "center"}},
+    ]
+    return html.Div([
+        sec("2025 O-Line Run Block Rating",
+            sub="2025 season O-line rank, trend, unit cohesion (1-5), projected 2026 rank, and whether the QB adds rushing juice. Click a column to sort."),
+        make_grid("g-oline-h", records, defs, 900),
+    ])
+
+def _render_oline():
+    records = [{"Rk": rk, "Team": team, "Name": name, "Consensus Score": score}
+               for rk, team, name, score in OLINE_DATA]
+    defs = [
+        {"field": "Rk", "headerName": "#", "pinned": "left", "width": 56, "minWidth": 56, "flex": 0,
+         "sortable": True, "cellStyle": {"color": TFAINT, "fontFamily": FONT_MONO}},
+        {"field": "Team", "headerName": "Team", "width": 90, "minWidth": 90, "flex": 0, "sortable": True,
+         "cellStyle": {"fontWeight": "700", "color": TEXT, "fontFamily": FONT_MONO}},
+        {"field": "Name", "headerName": "Team Name", "flex": 1, "minWidth": 150, "sortable": True,
+         "cellStyle": {"color": TDIM}},
+        {"field": "Consensus Score", "headerName": "Consensus Score", "flex": 1, "minWidth": 150, "sortable": True,
+         "cellStyle": heat_style("Consensus Score", invert=True)},
+    ]
+    return html.Div([
+        sec("2026 O-Line Preseason Rankings — Consensus",
+            sub="Averaged across major preseason O-line rankings. Lower score = better offensive line. Click a column to sort."),
+        make_grid("g-oline", records, defs, 900),
+    ])
 
 # ── COACHING CHANGES ──────────────────────────────────────────────────────────
 def _render_coaching():
