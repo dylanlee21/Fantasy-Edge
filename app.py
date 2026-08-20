@@ -268,8 +268,8 @@ OLINE_2025_DATA = [
 
 # ── DRAFT NOTES DATA (kept from prior build) ────────────────────────────────────
 MUST_DRAFT = {
-    "Early Round (1-3)":  ["Omarion Hampton","Ashton Jeanty","Malik Nabers","Chase Brown","James Cook III","Brock Bowers","DeVonta Smith","De'Von Achane"],
-    "Mid Round (4-7)":    ["Ladd McConkey","TreVeyon Henderson","Cam Skattebo","Christian Watson","Emeka Egbuka","Justin Herbert","Bhayshul Tuten","Javonte Williams"],
+    "Early Round (1-3)":  ["Omarion Hampton","Ashton Jeanty","Malik Nabers","Chase Brown","James Cook III","Brock Bowers","De'Von Achane"],
+    "Mid Round (4-7)":    ["Ladd McConkey","TreVeyon Henderson","Cam Skattebo","Christian Watson","Emeka Egbuka","Justin Herbert","Bhayshul Tuten","Javonte Williams","DeVonta Smith"],
     "Late Round (8+)":    ["Tucker Kraft","Jadarian Price","George Kittle"],
 }
 MUST_AVOID = {
@@ -280,8 +280,8 @@ MUST_AVOID = {
 TARGET_PICKS = {
     "Round 1":  ["Bijan Robinson","Jahmyr Gibbs","Puka Nacua","Amon-Ra St. Brown","James Cook III"],
     "Round 2":  ["Omarion Hampton","De'Von Achane","Chase Brown","Brock Bowers"],
-    "Round 3":  ["Chris Olave","Malik Nabers","Javonte Williams","DeVonta Smith"],
-    "Round 4":  ["Cam Skattebo","Ladd McConkey","Emeka Egbuka","Tetairoa McMillan"],
+    "Round 3":  ["Chris Olave","Malik Nabers","Javonte Williams"],
+    "Round 4":  ["Cam Skattebo","Ladd McConkey","Emeka Egbuka","Tetairoa McMillan","DeVonta Smith"],
     "Round 5":  ["Rome Odunze","Bhayshul Tuten","Quinshon Judkins"],
     "Round 6":  ["Parker Washington","Christian Watson","Jalen Hurts","Carnell Tate","Mike Evans"],
     "Round 7":  ["Justin Herbert","Tucker Kraft"],
