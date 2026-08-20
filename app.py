@@ -92,6 +92,15 @@ app.index_string = """<!DOCTYPE html>
     .ctrl-in:focus{border-color:#2dd4bf}
     .ctrl-lbl{font-size:10.5px;color:#5b6478;letter-spacing:.08em;text-transform:uppercase;
       margin-bottom:6px;font-weight:700}
+    .dash-dropdown-value-item, .dash-dropdown-value, .dash-dropdown-trigger,
+    .dash-dropdown-trigger-icon, .dash-dropdown-input{color:#0a0e14!important}
+    .dash-dropdown-menu, .dash-dropdown-option{background:#fff!important;color:#0a0e14!important}
+    .dash-dropdown-option:hover, .dash-dropdown-option--focused{background:#e6ebf2!important}
+    .Select-control, .Select-value-label, .Select-placeholder, .Select-input > input,
+    .Select-menu-outer, .Select-option, .Select-noresults, .VirtualizedSelectOption,
+    .Select--single > .Select-control .Select-value, .Select-arrow-zone{color:#0a0e14!important}
+    .Select-menu-outer, .Select-option{background:#fff!important}
+    .Select-option.is-focused{background:#e6ebf2!important}
     .toggle-btn{background:#10151d;border:1px solid #212a38;color:#8b95a7;border-radius:8px;
       font-size:12px;font-weight:600;padding:8px 16px;cursor:pointer;margin-right:8px}
     .toggle-btn:hover,.toggle-btn.active{border-color:#2dd4bf;color:#2dd4bf;background:#132821}
