@@ -268,12 +268,12 @@ OLINE_2025_DATA = [
 
 # ── DRAFT NOTES DATA (kept from prior build) ────────────────────────────────────
 MUST_DRAFT = {
-    "Early Round (1-3)":  ["Omarion Hampton","Ashton Jeanty","Malik Nabers","Chase Brown","James Cook III","Brock Bowers","DeVonta Smith"],
-    "Mid Round (4-7)":    ["Ladd McConkey","TreVeyon Henderson","Cam Skattebo","Christian Watson","Emeka Egbuka","Justin Herbert","Harold Fannin Jr.","Bhayshul Tuten","DJ Moore"],
-    "Late Round (8+)":    ["Tucker Kraft","Josh Downs","Matthew Golden","Jadarian Price","Kyle Monangai","George Kittle"],
+    "Early Round (1-3)":  ["Omarion Hampton","Ashton Jeanty","Malik Nabers","Chase Brown","James Cook III","Brock Bowers","DeVonta Smith","De'Von Achane"],
+    "Mid Round (4-7)":    ["Ladd McConkey","TreVeyon Henderson","Cam Skattebo","Christian Watson","Emeka Egbuka","Justin Herbert","Bhayshul Tuten","Javonte Williams"],
+    "Late Round (8+)":    ["Tucker Kraft","Jadarian Price","George Kittle"],
 }
 MUST_AVOID = {
-    "Early Round (1-3)":  ["Trey McBride","De'Von Achane","Christian McCaffrey","Jeremiyah Love","George Pickens"],
+    "Early Round (1-3)":  ["Trey McBride","Christian McCaffrey","Jeremiyah Love","George Pickens"],
     "Mid Round (4-7)":    ["Davante Adams","Tyler Warren","Bucky Irving"],
     "Late Round (8+)":    ["Dallas Goedert","Khalil Shakir","Jacory Croskey-Merritt","Calvin Ridley"],
 }
