@@ -459,6 +459,7 @@ app.layout = html.Div([
         # 2026 view
         html.Div(id="v2026", children=[
             dcc.Tabs(id="t2026", value="qb26", children=[
+                dcc.Tab(label="Rankings", value="rankings26", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="QB", value="qb26", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="RB", value="rb26", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="WR", value="wr26", style=_ts(), selected_style=_tsa()),
@@ -540,6 +541,26 @@ def toggle_season(s):
 @app.callback(Output("c2026", "children"), Input("t2026", "value"))
 def render_2026(tab):
     pos_map = {"qb26": "QB", "rb26": "RB", "wr26": "WR", "te26": "TE"}
+
+    if tab == "rankings26":
+        if master.empty: return empty_msg()
+        df = master.copy()
+        keep = [c for c in ["consensus_rank", "player", "position", "team", "consensus_pos_rank"] if c in df.columns]
+        df = df[keep].sort_values("consensus_rank")
+        rn = df.rename(columns=COL_LABELS).rename(columns={"Consensus Rank": "Rank", "Pos": "Position", "Pos Rank": "Consensus Pos Rank"})
+        defs = []
+        for c in rn.columns:
+            d = {"field": c, "headerName": c, "sortable": True, "resizable": True, "flex": 1, "minWidth": 100}
+            if c == "Player": d.update({"pinned": "left", "width": 200, "minWidth": 200, "flex": 0, "cellStyle": {"fontWeight": "700", "color": TEXT}})
+            if c == "Rank": d.update({"width": 70, "minWidth": 70, "flex": 0, "cellStyle": {"color": TFAINT, "fontFamily": FONT_MONO}})
+            if c == "Position": d.update({"width": 90, "minWidth": 90, "flex": 0})
+            defs.append(d)
+        return html.Div([
+            sec("2026 Consensus PPR Rankings · Overall",
+                sub="All positions ranked together, following Flock Fantasy's exact overall order. Click a column to sort."),
+            make_grid("g-rankings26", rn.fillna("—").to_dict("records"), defs, 600),
+        ])
+
     if tab in pos_map:
         if master.empty: return empty_msg()
         pos = pos_map[tab]
