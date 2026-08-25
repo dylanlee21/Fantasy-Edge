@@ -646,9 +646,10 @@ def render_hist(tab, season_str):
     return html.Div()
 
 # ── PLAYER ADVANCED PROFILE ─────────────────────────────────────────────────────
-def _stat_tile(label, value):
+def _stat_tile(label, value, color=None):
     return html.Div([
-        html.Div(str(value), style={"fontSize": "1.15rem", "fontWeight": "700", "color": TEXT, "fontFamily": FONT_MONO}),
+        html.Div(str(value), style={"fontSize": "1.15rem", "fontWeight": "700",
+                                     "color": color or TEXT, "fontFamily": FONT_MONO}),
         html.Div(label, style={"fontSize": "10px", "color": TFAINT, "letterSpacing": ".04em", "marginTop": "2px"}),
     ], style={"background": SURF2, "border": f"1px solid {BORDER}", "borderRadius": "8px",
               "padding": "10px 12px", "minWidth": "104px"})
@@ -660,7 +661,21 @@ def _safe_div(num, den, decimals=2):
     except (TypeError, ValueError):
         return None
 
-def _render_player_profile(r, pos, season_str):
+def _pct_color(value, series):
+    """Flock-style red-to-green heat color for value's percentile within series (higher = better)."""
+    try:
+        s = pd.to_numeric(series, errors="coerce").dropna()
+        v = float(value)
+    except (TypeError, ValueError):
+        return None
+    if len(s) < 4 or pd.isna(v):
+        return None
+    pct = (s < v).sum() / len(s)
+    red = round(210 * (1 - pct))
+    grn = round(160 * pct + 50)
+    return f"rgb({red},{grn},90)"
+
+def _render_player_profile(r, df, pos, season_str):
     pc = POS_C.get(pos, TEXT)
     ppr = r.get("fantasy_points_ppr")
     fppg = r.get("fppg_ppr")
@@ -681,34 +696,45 @@ def _render_player_profile(r, pos, season_str):
         rec_tds = r.get("receiving_tds", 0) or 0
         overview += [("Total Yds", int(rush_yds + rec_yds)), ("Total TD", int(rush_tds + rec_tds))]
 
-    adv = []
+    # Build comparison series (across all players at this position/season) for percentile coloring
+    def col0(frame, name):
+        return frame[name].fillna(0) if name in frame.columns else pd.Series(0, index=frame.index)
+    cdf = df.copy()
+    if "yards_per_target" in cdf.columns and not cdf["yards_per_target"].isna().all():
+        cdf["_ryds_t"] = cdf["yards_per_target"]
+    else:
+        cdf["_ryds_t"] = col0(cdf, "receiving_yards") / col0(cdf, "targets").replace(0, pd.NA)
+    cdf["_fpr"] = col0(cdf, "fantasy_points_ppr") / col0(cdf, "receptions").replace(0, pd.NA)
+    cdf["_fpo"] = col0(cdf, "fantasy_points_ppr") / (col0(cdf, "targets") + col0(cdf, "carries")).replace(0, pd.NA)
+
+    adv = []  # (label, display, raw_value, comparison_series)
     targets = r.get("targets")
     receptions = r.get("receptions")
     carries = r.get("carries")
     if pd.notna(r.get("target_share")):
-        adv.append(("Target %", f"{round(r['target_share'] * 100, 1)}%"))
+        adv.append(("Target %", f"{round(r['target_share'] * 100, 1)}%", r["target_share"], cdf.get("target_share")))
     if pd.notna(r.get("rz_targets")):
-        adv.append(("RZ Targets", int(r["rz_targets"])))
+        adv.append(("RZ Targets", int(r["rz_targets"]), r["rz_targets"], cdf.get("rz_targets")))
     elif pd.notna(r.get("gl_targets")):
-        adv.append(("Goal-Line Targets", int(r["gl_targets"])))
+        adv.append(("Goal-Line Targets", int(r["gl_targets"]), r["gl_targets"], cdf.get("gl_targets")))
     if pd.notna(r.get("rush_att_5plus")):
-        adv.append(("5+ Yd Rush Att", int(r["rush_att_5plus"])))
+        adv.append(("5+ Yd Rush Att", int(r["rush_att_5plus"]), r["rush_att_5plus"], cdf.get("rush_att_5plus")))
     if pd.notna(targets):
-        adv.append(("Targets", int(targets)))
+        adv.append(("Targets", int(targets), targets, cdf.get("targets")))
     if pd.notna(receptions):
-        adv.append(("Receptions", int(receptions)))
+        adv.append(("Receptions", int(receptions), receptions, cdf.get("receptions")))
     ryds_t = r.get("yards_per_target")
     if pd.isna(ryds_t) and pd.notna(targets) and pd.notna(r.get("receiving_yards")):
         ryds_t = _safe_div(r["receiving_yards"], targets, 1)
     if ryds_t is not None and pd.notna(ryds_t):
-        adv.append(("RYDS/T", round(ryds_t, 1)))
+        adv.append(("RYDS/T", round(ryds_t, 1), ryds_t, cdf.get("_ryds_t")))
     fpr = _safe_div(ppr, receptions, 2)
     if fpr is not None:
-        adv.append(("FP/R", fpr))
+        adv.append(("FP/R", fpr, fpr, cdf.get("_fpr")))
     opportunities = (targets or 0) + (carries or 0) if pd.notna(targets) or pd.notna(carries) else None
     fpo = _safe_div(ppr, opportunities, 2) if opportunities else None
     if fpo is not None:
-        adv.append(("FP/O", fpo))
+        adv.append(("FP/O", fpo, fpo, cdf.get("_fpo")))
 
     return html.Div([
         html.Div([
@@ -722,7 +748,8 @@ def _render_player_profile(r, pos, season_str):
         html.Div([_stat_tile(l, v) for l, v in overview], style={"display": "flex", "flexWrap": "wrap", "gap": "10px", "marginBottom": "24px"}),
 
         html.Div("ADVANCED", style={"fontSize": "11px", "fontWeight": "700", "color": ACCENT, "letterSpacing": ".06em", "marginBottom": "10px"}),
-        html.Div([_stat_tile(l, v) for l, v in adv], style={"display": "flex", "flexWrap": "wrap", "gap": "10px"})
+        html.Div([_stat_tile(l, disp, _pct_color(raw, series)) for l, disp, raw, series in adv],
+                  style={"display": "flex", "flexWrap": "wrap", "gap": "10px"})
         if adv else html.Div("No advanced data available for this player.", style={"color": TFAINT, "fontSize": "12px"}),
     ])
 
@@ -757,7 +784,7 @@ def toggle_player_modal(grid_clicks, close_click, season_str):
     if row.empty:
         return hidden, []
 
-    return visible, _render_player_profile(row.iloc[0], pos, season_str)
+    return visible, _render_player_profile(row.iloc[0], df, pos, season_str)
 
 # ── SOS 2026 ──────────────────────────────────────────────────────────────────
 @app.callback(Output("sos26-c", "children"), Input("sos26-pos", "value"))
