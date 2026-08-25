@@ -894,6 +894,18 @@ def _render_player_profile(r, df, pos, season_str):
         adv.append(("<20 RZT%", f"{round(r['rz20_pct'], 1)}%", r["rz20_pct"], cdf.get("rz20_pct")))
     if pd.notna(r.get("rz10_pct")):
         adv.append(("<10 RZT%", f"{round(r['rz10_pct'], 1)}%", r["rz10_pct"], cdf.get("rz10_pct")))
+    if pd.notna(r.get("rz20_rush_att")):
+        adv.append(("<20 Rush Att", int(r["rz20_rush_att"]), r["rz20_rush_att"], cdf.get("rz20_rush_att")))
+    if pd.notna(r.get("rz10_rush_att")):
+        adv.append(("<10 Rush Att", int(r["rz10_rush_att"]), r["rz10_rush_att"], cdf.get("rz10_rush_att")))
+    if pd.notna(r.get("rz5_rush_att")):
+        adv.append(("<5 Rush Att", int(r["rz5_rush_att"]), r["rz5_rush_att"], cdf.get("rz5_rush_att")))
+    if pd.notna(r.get("rz20_rush_pct")):
+        adv.append(("<20 Rush%", f"{round(r['rz20_rush_pct'], 1)}%", r["rz20_rush_pct"], cdf.get("rz20_rush_pct")))
+    if pd.notna(r.get("rz10_rush_pct")):
+        adv.append(("<10 Rush%", f"{round(r['rz10_rush_pct'], 1)}%", r["rz10_rush_pct"], cdf.get("rz10_rush_pct")))
+    if pd.notna(r.get("rz5_rush_pct")):
+        adv.append(("<5 Rush%", f"{round(r['rz5_rush_pct'], 1)}%", r["rz5_rush_pct"], cdf.get("rz5_rush_pct")))
     if pd.notna(r.get("rush_att_5plus")):
         adv.append(("5+ Yd Rush Att", int(r["rush_att_5plus"]), r["rush_att_5plus"], cdf.get("rush_att_5plus")))
     if pd.notna(targets):
