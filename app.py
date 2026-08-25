@@ -133,7 +133,7 @@ COL_LABELS = {
     "third_down_pct":"3rd Down Conv%","rz_conv_pct":"RZ Conv%",
     "avg_pts_allowed":"Avg Pts Allowed","sos_rank":"SOS Rank",
     "position":"Pos","consensus_rank":"Consensus Rank","fc_rank":"FantasyCalc",
-    "fc_pos_rank":"FC Pos Rank","ffc_rank":"FFC Rank","ffc_adp":"FFC ADP",
+    "fc_pos_rank":"FC Pos Rank","ffc_rank":"FFC Rank","ffc_adp":"ADP",
     "espn_rank":"ESPN","rb_overall_rank":"RotoBaller","fc_value":"FC Value",
     "yahoo_rank":"Yahoo","yahoo_pos_rank":"Yahoo Pos","2025_fppg_ppr":"2025 FPPG",
     "overall_rank":"Rank","player":"Player",
