@@ -355,6 +355,33 @@ def prep_position_df(df, pos):
     d["fppg_ppr"] = d["fppg_ppr"].round(1)
     return d
 
+def prep_overall_df(data):
+    """Combine QB/RB/WR/TE into one all-positions table ranked by total fantasy points."""
+    def col0(frame, name):
+        return frame[name].fillna(0) if name in frame.columns else pd.Series(0, index=frame.index)
+
+    frames = []
+    for pos in ["QB", "RB", "WR", "TE"]:
+        d = data.get(pos)
+        if d is None or d.empty:
+            continue
+        dd = d.copy()
+        dd["total_yards"] = col0(dd, "passing_yards") + col0(dd, "rushing_yards") + col0(dd, "receiving_yards")
+        dd["total_tds"] = col0(dd, "passing_tds") + col0(dd, "rushing_tds") + col0(dd, "receiving_tds")
+        dd["position"] = pos
+        keep = [c for c in ["player_display_name", "recent_team", "position", "games",
+                             "fantasy_points_ppr", "fppg_ppr", "total_yards", "total_tds"] if c in dd.columns]
+        frames.append(dd[keep])
+
+    if not frames:
+        return pd.DataFrame()
+    out = pd.concat(frames, ignore_index=True)
+    out = out.sort_values("fantasy_points_ppr", ascending=False).reset_index(drop=True)
+    out.insert(0, "rk", out.index + 1)
+    out["fantasy_points_ppr"] = out["fantasy_points_ppr"].round(1)
+    out["fppg_ppr"] = out["fppg_ppr"].round(1)
+    return out
+
 # ── AG GRID HELPERS ───────────────────────────────────────────────────────────
 DGRID = {"suppressMovableColumns": True, "suppressCellFocus": True, "animateRows": False}
 DCOL  = {"sortable": True, "resizable": True, "filter": False, "suppressMenu": True,
@@ -478,6 +505,7 @@ app.layout = html.Div([
         # Historical view (2025 / 2024)
         html.Div(id="vhist", style={"display": "none"}, children=[
             dcc.Tabs(id="thist", value="qb-h", children=[
+                dcc.Tab(label="Overall", value="overall-h", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="QB", value="qb-h", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="RB", value="rb-h", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="WR", value="wr-h", style=_ts(), selected_style=_tsa()),
@@ -715,6 +743,32 @@ def update_draftsim(x_clicks, reset_clicks, drafted):
 def render_hist(tab, season_str):
     if season_str == "2026": return html.Div()
     data = get_data(season_str)
+
+    if tab == "overall-h":
+        df = prep_overall_df(data)
+        if df.empty: return empty_msg()
+        rn = df.rename(columns=COL_LABELS)
+        defs = []
+        for c in rn.columns:
+            d = {"field": c, "headerName": c, "sortable": True, "resizable": True, "flex": 1, "minWidth": 100}
+            if c == "rk":
+                d.update({"headerName": "#", "pinned": "left", "width": 56, "minWidth": 56, "flex": 0, "sortable": True,
+                           "cellStyle": {"color": TFAINT, "fontFamily": FONT_MONO}})
+            elif c == "Player":
+                d.update({"pinned": "left", "width": 200, "minWidth": 200, "flex": 0,
+                          "cellStyle": {"fontWeight": "700", "color": TEXT}})
+            elif c == "Pos":
+                d.update({"width": 80, "minWidth": 80, "flex": 0, "cellStyle": pos_style_js()})
+            elif c == "Team":
+                d.update({"width": 90, "minWidth": 90, "flex": 0, "cellStyle": {"color": TDIM, "fontFamily": FONT_MONO, "fontWeight": "600"}})
+            elif c in ("Total PPR", "FPPG"):
+                d["cellStyle"] = heat_style(c)
+            defs.append(d)
+        return html.Div([
+            sec(f"Overall PPR Rankings · {season_str}",
+                sub="All positions ranked together by total fantasy points. Click a column header to sort."),
+            make_grid("g-overall-h", rn.fillna("—").to_dict("records"), defs, 640),
+        ])
 
     pos_map = {"qb-h": "QB", "rb-h": "RB", "wr-h": "WR", "te-h": "TE"}
     if tab in pos_map:
