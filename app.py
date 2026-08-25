@@ -4,7 +4,7 @@ Run locally:  py -3.12 app.py  →  http://localhost:8050
 Deploy:       gunicorn app:server --bind 0.0.0.0:$PORT
 """
 
-from dash import Dash, html, dcc, Input, Output, State, ctx, ALL
+from dash import Dash, html, dcc, Input, Output, State, ctx, ALL, no_update
 import dash_ag_grid as dag
 import pandas as pd
 import os
@@ -460,6 +460,7 @@ app.layout = html.Div([
         html.Div(id="v2026", children=[
             dcc.Tabs(id="t2026", value="qb26", children=[
                 dcc.Tab(label="Rankings", value="rankings26", style=_ts(), selected_style=_tsa()),
+                dcc.Tab(label="Draft Sim", value="draftsim26", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="QB", value="qb26", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="RB", value="rb26", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="WR", value="wr26", style=_ts(), selected_style=_tsa()),
@@ -502,6 +503,9 @@ app.layout = html.Div([
                    "padding": "28px", "maxWidth": "760px", "width": "92%", "maxHeight": "85vh",
                    "overflowY": "auto", "position": "relative"}),
     ]),
+
+    # Draft Sim state — list of drafted player names, persists across tab/season switches
+    dcc.Store(id="draftsim-store", storage_type="session", data=[]),
 
 ], style={"minHeight": "100vh", "background": BG})
 
@@ -561,6 +565,20 @@ def render_2026(tab):
             make_grid("g-rankings26", rn.fillna("—").to_dict("records"), defs, 600),
         ])
 
+    if tab == "draftsim26":
+        if master.empty: return empty_msg()
+        return html.Div([
+            html.Div([
+                sec("2026 Draft Sim · Big Board",
+                    sub="All positions ranked together, following Flock Fantasy's exact overall order. Click the ✕ when a player is drafted to remove them from the board — the top remaining player is always your best player available."),
+                html.Button("Reset Board", id={"type": "draftsim-reset", "index": 0}, n_clicks=0, style={
+                    "background": SURF2, "border": f"1px solid {BORDER}", "color": TEXT,
+                    "borderRadius": "8px", "padding": "9px 16px", "fontSize": "12.5px", "fontWeight": "600",
+                    "cursor": "pointer", "whiteSpace": "nowrap", "height": "fit-content", "marginTop": "2px"}),
+            ], style={"display": "flex", "justifyContent": "space-between", "alignItems": "flex-start", "gap": "16px"}),
+            html.Div(id="draftsim-board", style={"marginTop": "18px"}),
+        ])
+
     if tab in pos_map:
         if master.empty: return empty_msg()
         pos = pos_map[tab]
@@ -614,6 +632,83 @@ def render_2026(tab):
         return _render_coaching()
 
     return html.Div()
+
+# ── DRAFT SIM ─────────────────────────────────────────────────────────────────
+@app.callback(Output("draftsim-board", "children"), Input("draftsim-store", "data"))
+def render_draftsim_board(drafted):
+    if master.empty: return empty_msg()
+    drafted_set = set(drafted or [])
+    df = master.copy()
+    df = df[~df["player"].isin(drafted_set)].sort_values("consensus_rank")
+
+    header = html.Div([
+        html.Div("RANK", style={"width": "60px", "flex": "0 0 auto"}),
+        html.Div("PLAYER", style={"flex": "1 1 auto"}),
+        html.Div("POS", style={"width": "70px", "flex": "0 0 auto"}),
+        html.Div("TEAM", style={"width": "70px", "flex": "0 0 auto"}),
+        html.Div("POS RANK", style={"width": "90px", "flex": "0 0 auto"}),
+        html.Div("", style={"width": "50px", "flex": "0 0 auto"}),
+    ], style={"display": "flex", "alignItems": "center", "padding": "10px 16px",
+              "borderBottom": f"1px solid {BORDER}", "color": TFAINT, "fontSize": "11px",
+              "fontWeight": "700", "letterSpacing": ".05em"})
+
+    if df.empty:
+        rows = [html.Div("All players drafted — hit Reset Board to start over.",
+                          style={"color": TFAINT, "fontSize": "12.5px", "padding": "40px", "textAlign": "center"})]
+    else:
+        rows = []
+        for i, (_, r) in enumerate(df.iterrows()):
+            best = i == 0
+            pos = r.get("position", "")
+            rows.append(html.Div([
+                html.Div(str(int(r["consensus_rank"])) if pd.notna(r.get("consensus_rank")) else "—",
+                          style={"width": "60px", "flex": "0 0 auto", "color": TFAINT, "fontFamily": FONT_MONO}),
+                html.Div(r["player"], style={"flex": "1 1 auto", "fontWeight": "700",
+                                              "color": ACCENT if best else TEXT}),
+                html.Div(pos, style={"width": "70px", "flex": "0 0 auto", "fontWeight": "700",
+                                      "color": POS_C.get(pos, TEXT)}),
+                html.Div(r.get("team", "—") or "—", style={"width": "70px", "flex": "0 0 auto", "color": TDIM, "fontFamily": FONT_MONO}),
+                html.Div(r.get("consensus_pos_rank", "—") or "—", style={"width": "90px", "flex": "0 0 auto", "color": TDIM, "fontFamily": FONT_MONO}),
+                html.Div(
+                    html.Button("✕", id={"type": "draftsim-x", "player": r["player"]}, n_clicks=0, style={
+                        "background": "transparent", "border": f"1px solid {BORDER}", "color": RED,
+                        "borderRadius": "6px", "width": "30px", "height": "30px", "cursor": "pointer",
+                        "fontSize": "13px", "fontWeight": "700", "lineHeight": "1"}),
+                    style={"width": "50px", "flex": "0 0 auto"}),
+            ], style={"display": "flex", "alignItems": "center", "padding": "9px 16px",
+                      "borderBottom": f"1px solid {BORDER}",
+                      "background": "rgba(45,212,191,0.06)" if best else "transparent"}))
+
+    return html.Div([
+        html.Div(f"{len(df)} players remaining · {len(drafted_set)} drafted", style={
+            "color": TFAINT, "fontSize": "12px", "marginBottom": "10px"}),
+        html.Div([header, html.Div(rows, style={"maxHeight": "600px", "overflowY": "auto"})],
+                  style={"background": SURF, "border": f"1px solid {BORDER}", "borderRadius": "10px", "overflow": "hidden"}),
+    ])
+
+@app.callback(
+    Output("draftsim-store", "data"),
+    Input({"type": "draftsim-x", "player": ALL}, "n_clicks"),
+    Input({"type": "draftsim-reset", "index": ALL}, "n_clicks"),
+    State("draftsim-store", "data"),
+    prevent_initial_call=True,
+)
+def update_draftsim(x_clicks, reset_clicks, drafted):
+    trig = ctx.triggered_id
+    if trig is None or not isinstance(trig, dict):
+        return no_update
+    if trig.get("type") == "draftsim-reset":
+        return []
+    if trig.get("type") == "draftsim-x":
+        val = ctx.triggered[0]["value"] if ctx.triggered else None
+        if not val:  # ignore the initial render (n_clicks None/0)
+            return no_update
+        drafted = list(drafted or [])
+        player = trig.get("player")
+        if player and player not in drafted:
+            drafted.append(player)
+        return drafted
+    return no_update
 
 # ── HISTORICAL TABS ───────────────────────────────────────────────────────────
 @app.callback(Output("chist", "children"), Input("thist", "value"), Input("season", "value"))
