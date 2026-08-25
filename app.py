@@ -886,10 +886,14 @@ def _render_player_profile(r, df, pos, season_str):
         adv.append(("Target %", f"{round(r['target_share'] * 100, 1)}%", r["target_share"], cdf.get("target_share")))
     if pd.notna(r.get("avg_snap_pct")):
         adv.append(("Snap %", f"{round(r['avg_snap_pct'] * 100, 1)}%", r["avg_snap_pct"], cdf.get("avg_snap_pct")))
-    if pd.notna(r.get("rz_targets")):
-        adv.append(("RZ Targets", int(r["rz_targets"]), r["rz_targets"], cdf.get("rz_targets")))
-    elif pd.notna(r.get("gl_targets")):
-        adv.append(("Goal-Line Targets", int(r["gl_targets"]), r["gl_targets"], cdf.get("gl_targets")))
+    if pd.notna(r.get("rz20_tgt")):
+        adv.append(("<20 RZT", int(r["rz20_tgt"]), r["rz20_tgt"], cdf.get("rz20_tgt")))
+    if pd.notna(r.get("rz10_tgt")):
+        adv.append(("<10 RZT", int(r["rz10_tgt"]), r["rz10_tgt"], cdf.get("rz10_tgt")))
+    if pd.notna(r.get("rz20_pct")):
+        adv.append(("<20 RZT%", f"{round(r['rz20_pct'], 1)}%", r["rz20_pct"], cdf.get("rz20_pct")))
+    if pd.notna(r.get("rz10_pct")):
+        adv.append(("<10 RZT%", f"{round(r['rz10_pct'], 1)}%", r["rz10_pct"], cdf.get("rz10_pct")))
     if pd.notna(r.get("rush_att_5plus")):
         adv.append(("5+ Yd Rush Att", int(r["rush_att_5plus"]), r["rush_att_5plus"], cdf.get("rush_att_5plus")))
     if pd.notna(targets):
