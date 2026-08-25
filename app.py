@@ -132,7 +132,8 @@ COL_LABELS = {
     "team":"Team","pass_rate":"Pass Rate","run_rate":"Run Rate",
     "third_down_pct":"3rd Down Conv%","rz_conv_pct":"RZ Conv%",
     "avg_pts_allowed":"Avg Pts Allowed","sos_rank":"SOS Rank",
-    "position":"Pos","consensus_rank":"Consensus Rank","fc_rank":"FantasyCalc",
+    "position":"Pos","consensus_rank":"Consensus Rank","consensus_pos_rank":"Pos Rank",
+    "fc_rank":"FantasyCalc",
     "fc_pos_rank":"FC Pos Rank","ffc_rank":"FFC Rank","ffc_adp":"ADP",
     "espn_rank":"ESPN","rb_overall_rank":"RotoBaller","fc_value":"FC Value",
     "yahoo_rank":"Yahoo","yahoo_pos_rank":"Yahoo Pos","2025_fppg_ppr":"2025 FPPG",
@@ -545,9 +546,9 @@ def render_2026(tab):
         df = master.copy()
         if "position" in df.columns:
             df = df[df["position"] == pos]
-        keep = [c for c in ["overall_rank", "player", "team", "consensus_rank", "ffc_adp"] if c in df.columns]
-        df = df[keep].sort_values("overall_rank")
-        rn = df.rename(columns=COL_LABELS)
+        keep = [c for c in ["consensus_rank", "player", "team", "consensus_pos_rank"] if c in df.columns]
+        df = df[keep].sort_values("consensus_rank")
+        rn = df.rename(columns=COL_LABELS).rename(columns={"Consensus Rank": "Rank", "Pos Rank": "Consensus Pos Rank"})
         defs = []
         for c in rn.columns:
             d = {"field": c, "headerName": c, "sortable": True, "resizable": True, "flex": 1, "minWidth": 100}
