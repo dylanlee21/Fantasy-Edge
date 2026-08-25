@@ -884,6 +884,8 @@ def _render_player_profile(r, df, pos, season_str):
     carries = r.get("carries")
     if pd.notna(r.get("target_share")):
         adv.append(("Target %", f"{round(r['target_share'] * 100, 1)}%", r["target_share"], cdf.get("target_share")))
+    if pd.notna(r.get("avg_snap_pct")):
+        adv.append(("Snap %", f"{round(r['avg_snap_pct'] * 100, 1)}%", r["avg_snap_pct"], cdf.get("avg_snap_pct")))
     if pd.notna(r.get("rz_targets")):
         adv.append(("RZ Targets", int(r["rz_targets"]), r["rz_targets"], cdf.get("rz_targets")))
     elif pd.notna(r.get("gl_targets")):
