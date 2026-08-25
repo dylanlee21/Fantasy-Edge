@@ -4,7 +4,7 @@ Run locally:  py -3.12 app.py  →  http://localhost:8050
 Deploy:       gunicorn app:server --bind 0.0.0.0:$PORT
 """
 
-from dash import Dash, html, dcc, Input, Output, ctx
+from dash import Dash, html, dcc, Input, Output, State, ctx, ALL
 import dash_ag_grid as dag
 import pandas as pd
 import os
@@ -393,7 +393,8 @@ def stat_table_grid(gid, df, height=600):
             d.update({"headerName": "#", "pinned": "left", "width": 56, "minWidth": 56, "flex": 0, "sortable": True,
                        "cellStyle": {"color": TFAINT, "fontFamily": FONT_MONO}})
         elif c == "Player":
-            d.update({"pinned": "left", "width": 200, "minWidth": 200, "flex": 0, "cellStyle": {"fontWeight": "700", "color": TEXT}})
+            d.update({"pinned": "left", "width": 200, "minWidth": 200, "flex": 0,
+                      "cellStyle": {"fontWeight": "700", "color": ACCENT, "cursor": "pointer", "textDecoration": "underline"}})
         elif c == "Team":
             d.update({"width": 90, "minWidth": 90, "flex": 0, "cellStyle": {"color": TDIM, "fontFamily": FONT_MONO, "fontWeight": "600"}})
         elif c in ("Total PPR", "FPPG"):
@@ -487,6 +488,19 @@ app.layout = html.Div([
         ]),
 
     ], className="app-shell", style={"padding": "0 24px 60px"}),
+
+    # Player profile modal
+    html.Div(id="player-modal-overlay", style={"display": "none"}, children=[
+        html.Div([
+            html.Button("×", id="modal-close-btn", n_clicks=0, style={
+                "position": "absolute", "top": "12px", "right": "16px", "background": "transparent",
+                "border": "none", "color": TDIM, "fontSize": "1.6rem", "cursor": "pointer", "lineHeight": "1"}),
+            html.Div(id="player-modal-body"),
+        ], style={"background": SURF, "border": f"1px solid {BORDER}", "borderRadius": "12px",
+                   "padding": "28px", "maxWidth": "760px", "width": "92%", "maxHeight": "85vh",
+                   "overflowY": "auto", "position": "relative"}),
+    ]),
+
 ], style={"minHeight": "100vh", "background": BG})
 
 # ── SEASON PILLS + TOGGLE ─────────────────────────────────────────────────────
@@ -592,8 +606,8 @@ def render_hist(tab, season_str):
         if df.empty: return empty_msg()
         label = {"QB": "Quarterback", "RB": "Running Back", "WR": "Wide Receiver", "TE": "Tight End"}[pos]
         return html.Div([
-            sec(f"{label} PPR Rankings · {season_str}", sub="Click a column header to sort — click again to reverse."),
-            stat_table_grid(f"g-{tab}", df, 600),
+            sec(f"{label} PPR Rankings · {season_str}", sub="Click a column header to sort — click a player's name for their advanced profile."),
+            stat_table_grid({"type": "hist-grid", "pos": pos}, df, 600),
         ])
 
     if tab == "splits":
@@ -630,6 +644,120 @@ def render_hist(tab, season_str):
         return _render_oline_hist(season_str)
 
     return html.Div()
+
+# ── PLAYER ADVANCED PROFILE ─────────────────────────────────────────────────────
+def _stat_tile(label, value):
+    return html.Div([
+        html.Div(str(value), style={"fontSize": "1.15rem", "fontWeight": "700", "color": TEXT, "fontFamily": FONT_MONO}),
+        html.Div(label, style={"fontSize": "10px", "color": TFAINT, "letterSpacing": ".04em", "marginTop": "2px"}),
+    ], style={"background": SURF2, "border": f"1px solid {BORDER}", "borderRadius": "8px",
+              "padding": "10px 12px", "minWidth": "104px"})
+
+def _safe_div(num, den, decimals=2):
+    try:
+        num = float(num); den = float(den)
+        return round(num / den, decimals) if den else None
+    except (TypeError, ValueError):
+        return None
+
+def _render_player_profile(r, pos, season_str):
+    pc = POS_C.get(pos, TEXT)
+    ppr = r.get("fantasy_points_ppr")
+    fppg = r.get("fppg_ppr")
+    games = r.get("games")
+
+    overview = [("GP", games), ("Total PPR", round(ppr, 1) if pd.notna(ppr) else "—"),
+                ("FPPG", round(fppg, 1) if pd.notna(fppg) else "—")]
+    if pos == "QB":
+        overview += [("Pass Yds", int(r.get("passing_yards", 0) or 0)),
+                     ("Pass TD", int(r.get("passing_tds", 0) or 0)),
+                     ("INT", int(r.get("interceptions", 0) or 0)),
+                     ("Rush Yds", int(r.get("rushing_yards", 0) or 0)),
+                     ("Rush TD", int(r.get("rushing_tds", 0) or 0))]
+    else:
+        rush_yds = r.get("rushing_yards", 0) or 0
+        rec_yds = r.get("receiving_yards", 0) or 0
+        rush_tds = r.get("rushing_tds", 0) or 0
+        rec_tds = r.get("receiving_tds", 0) or 0
+        overview += [("Total Yds", int(rush_yds + rec_yds)), ("Total TD", int(rush_tds + rec_tds))]
+
+    adv = []
+    targets = r.get("targets")
+    receptions = r.get("receptions")
+    carries = r.get("carries")
+    if pd.notna(r.get("target_share")):
+        adv.append(("Target %", f"{round(r['target_share'] * 100, 1)}%"))
+    if pd.notna(r.get("rz_targets")):
+        adv.append(("RZ Targets", int(r["rz_targets"])))
+    elif pd.notna(r.get("gl_targets")):
+        adv.append(("Goal-Line Targets", int(r["gl_targets"])))
+    if pd.notna(r.get("rush_att_5plus")):
+        adv.append(("5+ Yd Rush Att", int(r["rush_att_5plus"])))
+    if pd.notna(targets):
+        adv.append(("Targets", int(targets)))
+    if pd.notna(receptions):
+        adv.append(("Receptions", int(receptions)))
+    ryds_t = r.get("yards_per_target")
+    if pd.isna(ryds_t) and pd.notna(targets) and pd.notna(r.get("receiving_yards")):
+        ryds_t = _safe_div(r["receiving_yards"], targets, 1)
+    if ryds_t is not None and pd.notna(ryds_t):
+        adv.append(("RYDS/T", round(ryds_t, 1)))
+    fpr = _safe_div(ppr, receptions, 2)
+    if fpr is not None:
+        adv.append(("FP/R", fpr))
+    opportunities = (targets or 0) + (carries or 0) if pd.notna(targets) or pd.notna(carries) else None
+    fpo = _safe_div(ppr, opportunities, 2) if opportunities else None
+    if fpo is not None:
+        adv.append(("FP/O", fpo))
+
+    return html.Div([
+        html.Div([
+            html.Span(r.get("player_display_name", "—"), style={"fontSize": "1.4rem", "fontWeight": "800", "color": TEXT, "marginRight": "10px"}),
+            html.Span(pos, style={"background": pc + "22", "border": f"1px solid {pc}55", "color": pc,
+                                   "fontSize": "11px", "fontWeight": "700", "padding": "3px 9px", "borderRadius": "5px"}),
+        ], style={"marginBottom": "4px"}),
+        html.Div(f"{r.get('recent_team', '—')} · {season_str} season", style={"color": TDIM, "fontSize": "12.5px", "marginBottom": "20px"}),
+
+        html.Div("OVERVIEW", style={"fontSize": "11px", "fontWeight": "700", "color": TFAINT, "letterSpacing": ".06em", "marginBottom": "10px"}),
+        html.Div([_stat_tile(l, v) for l, v in overview], style={"display": "flex", "flexWrap": "wrap", "gap": "10px", "marginBottom": "24px"}),
+
+        html.Div("ADVANCED", style={"fontSize": "11px", "fontWeight": "700", "color": ACCENT, "letterSpacing": ".06em", "marginBottom": "10px"}),
+        html.Div([_stat_tile(l, v) for l, v in adv], style={"display": "flex", "flexWrap": "wrap", "gap": "10px"})
+        if adv else html.Div("No advanced data available for this player.", style={"color": TFAINT, "fontSize": "12px"}),
+    ])
+
+@app.callback(
+    Output("player-modal-overlay", "style"),
+    Output("player-modal-body", "children"),
+    Input({"type": "hist-grid", "pos": ALL}, "cellClicked"),
+    Input("modal-close-btn", "n_clicks"),
+    State("season", "value"),
+    prevent_initial_call=True,
+)
+def toggle_player_modal(grid_clicks, close_click, season_str):
+    hidden = {"display": "none"}
+    visible = {"position": "fixed", "top": 0, "left": 0, "right": 0, "bottom": 0,
+               "background": "rgba(0,0,0,0.6)", "zIndex": 1000, "display": "flex",
+               "alignItems": "center", "justifyContent": "center"}
+    trig = ctx.triggered_id
+    if trig is None or trig == "modal-close-btn" or not isinstance(trig, dict):
+        return hidden, []
+
+    pos = trig.get("pos")
+    cell = ctx.triggered[0]["value"] if ctx.triggered else None
+    if not cell or cell.get("colId") != "Player":
+        return hidden, []
+
+    player_name = cell.get("value")
+    if not player_name or season_str == "2026":
+        return hidden, []
+
+    df = get_data(season_str)[pos]
+    row = df[df["player_display_name"] == player_name]
+    if row.empty:
+        return hidden, []
+
+    return visible, _render_player_profile(row.iloc[0], pos, season_str)
 
 # ── SOS 2026 ──────────────────────────────────────────────────────────────────
 @app.callback(Output("sos26-c", "children"), Input("sos26-pos", "value"))
