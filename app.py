@@ -225,6 +225,29 @@ PLAY_CALLERS = [
     (32, "NY Giants",     "Matt Nagy (OC)",         "John Harbaugh"),
 ]
 
+# Maps PLAY_CALLERS' full team names to the abbreviations used in team_analytics.csv / schedule data
+PLAYCALLER_TEAM_ABBR = {
+    "LA Rams": "LA", "San Francisco": "SF", "Chicago": "CHI", "Denver": "DEN",
+    "Jacksonville": "JAX", "New England": "NE", "Kansas City": "KC", "Minnesota": "MIN",
+    "Green Bay": "GB", "Indianapolis": "IND", "LA Chargers": "LAC", "New Orleans": "NO",
+    "Dallas": "DAL", "Las Vegas": "LV", "Cleveland": "CLE", "Tennessee": "TEN",
+    "Buffalo": "BUF", "Cincinnati": "CIN", "Carolina": "CAR", "Atlanta": "ATL",
+    "Tampa Bay": "TB", "Pittsburgh": "PIT", "Houston": "HOU", "Detroit": "DET",
+    "Seattle": "SEA", "Arizona": "ARI", "Miami": "MIA", "Philadelphia": "PHI",
+    "Baltimore": "BAL", "Washington": "WAS", "NY Jets": "NYJ", "NY Giants": "NYG",
+}
+
+# 2025 final regular-season records (W-L-T), computed from nflreadpy schedule results
+TEAM_RECORD_2025 = {
+    "ARI": "3-14", "ATL": "8-9", "BAL": "8-9", "BUF": "12-5", "CAR": "8-9",
+    "CHI": "11-6", "CIN": "6-11", "CLE": "5-12", "DAL": "7-9-1", "DEN": "14-3",
+    "DET": "9-8", "GB": "9-7-1", "HOU": "12-5", "IND": "8-9", "JAX": "13-4",
+    "KC": "6-11", "LA": "12-5", "LAC": "11-6", "LV": "3-14", "MIA": "7-10",
+    "MIN": "9-8", "NE": "14-3", "NO": "6-11", "NYG": "4-13", "NYJ": "3-14",
+    "PHI": "11-6", "PIT": "10-7", "SEA": "14-3", "SF": "12-5", "TB": "8-9",
+    "TEN": "3-14", "WAS": "5-12",
+}
+
 # ── 2026 O-LINE CONSENSUS RANKINGS ───────────────────────────────────────────────
 # rank, team abbr, team name, consensus avg score (lower = better; averaged across major preseason O-line rankings)
 OLINE_DATA = [
@@ -1069,20 +1092,39 @@ def toggle_draft(nm, nt, nu):
 
 # ── PLAY CALLERS ──────────────────────────────────────────────────────────────
 def _render_playcallers():
-    records = [{"Rk": r, "Team": t, "Play Caller": pc, "Coach / OC": co} for r, t, pc, co in PLAY_CALLERS]
+    adf = get_data("2025")["ANALYTICS"]
+    arow = {} if adf.empty else {r["team"]: r for r in adf.to_dict("records")}
+
+    records = []
+    for r, t, pc, co in PLAY_CALLERS:
+        abbr = PLAYCALLER_TEAM_ABBR.get(t)
+        a = arow.get(abbr, {})
+        records.append({
+            "Rk": r, "Team": t, "Play Caller": pc,
+            "Run Rate": f"{a['run_rate']}%" if a.get("run_rate") is not None else "—",
+            "Pass Rate": f"{a['pass_rate']}%" if a.get("pass_rate") is not None else "—",
+            "RZ Conv%": f"{a['rz_conv_pct']}%" if a.get("rz_conv_pct") is not None else "—",
+            "2025 Record": TEAM_RECORD_2025.get(abbr, "—"),
+        })
     defs = [
         {"field": "Rk", "headerName": "#", "pinned": "left", "width": 60, "minWidth": 60, "flex": 0,
          "sortable": True, "cellStyle": {"color": TFAINT, "fontFamily": FONT_MONO}},
-        {"field": "Team", "headerName": "Team", "width": 160, "minWidth": 160, "flex": 0, "sortable": True,
+        {"field": "Team", "headerName": "Team", "width": 150, "minWidth": 150, "flex": 0, "sortable": True,
          "cellStyle": {"fontWeight": "700", "color": TEXT}},
-        {"field": "Play Caller", "headerName": "Play Caller", "flex": 1, "minWidth": 180, "sortable": True,
+        {"field": "Play Caller", "headerName": "Play Caller", "flex": 1, "minWidth": 170, "sortable": True,
          "cellStyle": {"color": ACCENT, "fontWeight": "600"}},
-        {"field": "Coach / OC", "headerName": "Coach / OC", "flex": 1, "minWidth": 180, "sortable": True,
-         "cellStyle": {"color": TDIM}},
+        {"field": "Run Rate", "headerName": "2025 Run Rate", "width": 130, "minWidth": 130, "flex": 0,
+         "sortable": True, "cellStyle": heat_style("Run Rate")},
+        {"field": "Pass Rate", "headerName": "2025 Pass Rate", "width": 135, "minWidth": 135, "flex": 0,
+         "sortable": True, "cellStyle": heat_style("Pass Rate")},
+        {"field": "RZ Conv%", "headerName": "2025 RZ Conv%", "width": 135, "minWidth": 135, "flex": 0,
+         "sortable": True, "cellStyle": heat_style("RZ Conv%")},
+        {"field": "2025 Record", "headerName": "2025 Record", "width": 130, "minWidth": 130, "flex": 0,
+         "sortable": True, "cellStyle": {"color": TDIM, "fontFamily": FONT_MONO, "fontWeight": "600"}},
     ]
     return html.Div([
         sec("2026 Offensive Play Callers",
-            sub="Who actually calls plays for each team — the highlighted name. Click a column to sort."),
+            sub="Who actually calls plays for each team — the highlighted name — plus how that offense performed in 2025. Click a column to sort."),
         make_grid("g-playcallers", records, defs, 760),
     ])
 
