@@ -27,9 +27,9 @@ TDIM    = "#8b95a7"
 TFAINT  = "#5b6478"
 GREEN   = "#34d399"
 RED     = "#f87171"
-POS_C   = {"QB":"#60a5fa","RB":"#34d399","WR":"#fb923c","TE":"#c084fc","K":"#facc15","DST":"#94a3b8"}
-# Colors specifically for "Consensus Pos Rank" values like "RB1"/"WR12" (blue/red/purple/green per user request)
-POS_RANK_C = {"RB": "#3b82f6", "WR": "#ef4444", "TE": "#a78bfa", "QB": "#4ade80"}
+POS_C   = {"QB":"#4ade80","RB":"#3b82f6","WR":"#ef4444","TE":"#a78bfa","K":"#facc15","DST":"#94a3b8"}
+# Same position colors, keyed for use against "Consensus Pos Rank" values like "RB1"/"WR12"
+POS_RANK_C = POS_C
 
 FONT_HEAD = "'Inter', -apple-system, sans-serif"
 FONT_MONO = "'JetBrains Mono', monospace"
