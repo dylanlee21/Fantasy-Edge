@@ -28,6 +28,8 @@ TFAINT  = "#5b6478"
 GREEN   = "#34d399"
 RED     = "#f87171"
 POS_C   = {"QB":"#60a5fa","RB":"#34d399","WR":"#fb923c","TE":"#c084fc","K":"#facc15","DST":"#94a3b8"}
+# Colors specifically for "Consensus Pos Rank" values like "RB1"/"WR12" (blue/red/purple/green per user request)
+POS_RANK_C = {"RB": "#3b82f6", "WR": "#ef4444", "TE": "#a78bfa", "QB": "#4ade80"}
 
 FONT_HEAD = "'Inter', -apple-system, sans-serif"
 FONT_MONO = "'JetBrains Mono', monospace"
@@ -456,10 +458,15 @@ def heat_style_avg(avg, spread, invert=False):
 
 def pos_style_js():
     c = POS_C
-    return {"function": f"""(function(p){{
-        var c={{"QB":"{c['QB']}","RB":"{c['RB']}","WR":"{c['WR']}","TE":"{c['TE']}","DST":"{c.get('DST','#94a3b8')}","K":"{c.get('K','#facc15')}"}};
-        return {{color:c[p.value]||"{TEXT}",fontWeight:"700"}};
-    }})(params)"""}
+    order = ["QB", "RB", "WR", "TE", "DST", "K"]
+    parts = [f"params.value=='{p}' ? {{'color':'{c.get(p, TEXT)}','fontWeight':'700'}} :" for p in order]
+    return {"function": " ".join(parts) + f" {{'color':'{TEXT}','fontWeight':'700'}}"}
+
+def pos_rank_style_js():
+    """Colors "Consensus Pos Rank" values like 'RB1'/'WR12' by the position prefix."""
+    c = POS_RANK_C
+    parts = [f"params.value.indexOf('{p}')==0 ? {{'color':'{c[p]}','fontWeight':'700'}} :" for p in ["RB", "WR", "TE", "QB"]]
+    return {"function": " ".join(parts) + " {}"}
 
 def stat_table_grid(gid, df, height=600):
     rn = df.rename(columns=COL_LABELS)
@@ -634,7 +641,8 @@ def render_2026(tab):
             d = {"field": c, "headerName": c, "sortable": True, "resizable": True, "flex": 1, "minWidth": 100}
             if c == "Player": d.update({"pinned": "left", "width": 200, "minWidth": 200, "flex": 0, "cellStyle": {"fontWeight": "700", "color": TEXT}})
             if c == "Rank": d.update({"width": 70, "minWidth": 70, "flex": 0, "cellStyle": {"color": TFAINT, "fontFamily": FONT_MONO}})
-            if c == "Position": d.update({"width": 90, "minWidth": 90, "flex": 0})
+            if c == "Position": d.update({"width": 90, "minWidth": 90, "flex": 0, "cellStyle": pos_style_js()})
+            if c == "Consensus Pos Rank": d.update({"cellStyle": pos_rank_style_js()})
             defs.append(d)
         return html.Div([
             sec("2026 Consensus PPR Rankings · Overall",
@@ -670,6 +678,7 @@ def render_2026(tab):
             d = {"field": c, "headerName": c, "sortable": True, "resizable": True, "flex": 1, "minWidth": 100}
             if c == "Player": d.update({"pinned": "left", "width": 200, "minWidth": 200, "flex": 0, "cellStyle": {"fontWeight": "700", "color": TEXT}})
             if c == "Rank": d.update({"width": 70, "minWidth": 70, "flex": 0, "cellStyle": {"color": TFAINT, "fontFamily": FONT_MONO}})
+            if c == "Consensus Pos Rank": d.update({"cellStyle": pos_rank_style_js()})
             defs.append(d)
         label = {"QB": "Quarterbacks", "RB": "Running Backs", "WR": "Wide Receivers", "TE": "Tight Ends"}[pos]
         return html.Div([
@@ -745,7 +754,8 @@ def render_draftsim_board(drafted):
                 html.Div(pos, style={"width": "70px", "flex": "0 0 auto", "fontWeight": "700",
                                       "color": POS_C.get(pos, TEXT)}),
                 html.Div(r.get("team", "—") or "—", style={"width": "70px", "flex": "0 0 auto", "color": TDIM, "fontFamily": FONT_MONO}),
-                html.Div(r.get("consensus_pos_rank", "—") or "—", style={"width": "90px", "flex": "0 0 auto", "color": TDIM, "fontFamily": FONT_MONO}),
+                html.Div(r.get("consensus_pos_rank", "—") or "—", style={"width": "90px", "flex": "0 0 auto",
+                          "color": POS_RANK_C.get(pos, TDIM), "fontWeight": "700", "fontFamily": FONT_MONO}),
                 html.Div(
                     html.Button("✕", id={"type": "draftsim-x", "player": r["player"]}, n_clicks=0, style={
                         "background": "transparent", "border": f"1px solid {BORDER}", "color": RED,
