@@ -428,6 +428,32 @@ def heat_style(col, invert=False):
         return {{color:'rgb('+red+','+grn+',90)',fontWeight:'700'}};
     }})(params)"""}
 
+def heat_style_avg(avg, spread, invert=False):
+    """Diverging red→yellow→green gradient centered on a fixed league-average value
+    (rather than the min/max of the visible rows). Green = above average (good),
+    red = below average (bad); pass invert=True to flip that direction.
+
+    NOTE: dash-ag-grid's dangerously_allow_code sandbox only supports a single
+    top-level expression for cellStyle (no var/if statements — only one bare
+    expression, or an IIFE whose body is a single `return <expr>;`), and it does
+    not expose parseFloat. So this must (a) be written as one nested-ternary
+    expression with the average/spread/sub-terms inlined as literals, and
+    (b) receive params.value as a raw number — callers must NOT pre-format the
+    field's value as a "41.6%" string; format for display via valueFormatter
+    instead, since cellStyle sees the raw (unformatted) value."""
+    spread = spread or 1
+    sign = "-1*" if invert else ""
+    d = f"Math.max(-1,Math.min(1,({sign}(params.value-{avg}))/{spread}))"
+    t1 = f"({d}+1)"
+    t2 = d
+    expr = (
+        f"({d} < 0) ? "
+        f"{{'color':'rgb(224,'+Math.round(91+105*{t1})+','+Math.round(91-15*{t1})+')','fontWeight':'700'}}"
+        f" : "
+        f"{{'color':'rgb('+Math.round(224-150*{t2})+',196,'+Math.round(76+44*{t2})+')','fontWeight':'700'}}"
+    )
+    return {"function": expr}
+
 def pos_style_js():
     c = POS_C
     return {"function": f"""(function(p){{
@@ -1095,17 +1121,29 @@ def _render_playcallers():
     adf = get_data("2025")["ANALYTICS"]
     arow = {} if adf.empty else {r["team"]: r for r in adf.to_dict("records")}
 
+    def _avg_spread(col):
+        if adf.empty or col not in adf.columns:
+            return 0, 1
+        avg = adf[col].mean()
+        spread = (adf[col] - avg).abs().max()
+        return round(avg, 2), round(spread, 2) or 1
+
+    run_avg, run_spread = _avg_spread("run_rate")
+    pass_avg, pass_spread = _avg_spread("pass_rate")
+    rz_avg, rz_spread = _avg_spread("rz_conv_pct")
+
     records = []
     for r, t, pc, co in PLAY_CALLERS:
         abbr = PLAYCALLER_TEAM_ABBR.get(t)
         a = arow.get(abbr, {})
         records.append({
             "Rk": r, "Team": t, "Play Caller": pc,
-            "Run Rate": f"{a['run_rate']}%" if a.get("run_rate") is not None else "—",
-            "Pass Rate": f"{a['pass_rate']}%" if a.get("pass_rate") is not None else "—",
-            "RZ Conv%": f"{a['rz_conv_pct']}%" if a.get("rz_conv_pct") is not None else "—",
+            "Run Rate": a.get("run_rate"),
+            "Pass Rate": a.get("pass_rate"),
+            "RZ Conv%": a.get("rz_conv_pct"),
             "2025 Record": TEAM_RECORD_2025.get(abbr, "—"),
         })
+    pct_fmt = {"function": "params.value == null ? '—' : params.value + '%'"}
     defs = [
         {"field": "Rk", "headerName": "#", "pinned": "left", "width": 60, "minWidth": 60, "flex": 0,
          "sortable": True, "cellStyle": {"color": TFAINT, "fontFamily": FONT_MONO}},
@@ -1114,11 +1152,11 @@ def _render_playcallers():
         {"field": "Play Caller", "headerName": "Play Caller", "flex": 1, "minWidth": 170, "sortable": True,
          "cellStyle": {"color": ACCENT, "fontWeight": "600"}},
         {"field": "Run Rate", "headerName": "2025 Run Rate", "width": 130, "minWidth": 130, "flex": 0,
-         "sortable": True, "cellStyle": heat_style("Run Rate")},
+         "sortable": True, "valueFormatter": pct_fmt, "cellStyle": heat_style_avg(run_avg, run_spread)},
         {"field": "Pass Rate", "headerName": "2025 Pass Rate", "width": 135, "minWidth": 135, "flex": 0,
-         "sortable": True, "cellStyle": heat_style("Pass Rate")},
+         "sortable": True, "valueFormatter": pct_fmt, "cellStyle": heat_style_avg(pass_avg, pass_spread)},
         {"field": "RZ Conv%", "headerName": "2025 RZ Conv%", "width": 135, "minWidth": 135, "flex": 0,
-         "sortable": True, "cellStyle": heat_style("RZ Conv%")},
+         "sortable": True, "valueFormatter": pct_fmt, "cellStyle": heat_style_avg(rz_avg, rz_spread)},
         {"field": "2025 Record", "headerName": "2025 Record", "width": 130, "minWidth": 130, "flex": 0,
          "sortable": True, "cellStyle": {"color": TDIM, "fontFamily": FONT_MONO, "fontWeight": "600"}},
     ]
