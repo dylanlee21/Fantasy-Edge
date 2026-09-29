@@ -543,14 +543,10 @@ app.layout = html.Div([
 
         # 2026 view
         html.Div(id="v2026", children=[
-            dcc.Tabs(id="t2026", value="qb26", children=[
+            dcc.Tabs(id="t2026", value="rankings26", children=[
                 dcc.Tab(label="Pre-Draft Rankings", value="rankings26", style=_ts(), selected_style=_tsa()),
-                dcc.Tab(label="Updated Rankings", value="updatedrankings26", style=_ts(), selected_style=_tsa()),
+                dcc.Tab(label="Live Rankings", value="liverankings26", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="Draft Sim", value="draftsim26", style=_ts(), selected_style=_tsa()),
-                dcc.Tab(label="QB", value="qb26", style=_ts(), selected_style=_tsa()),
-                dcc.Tab(label="RB", value="rb26", style=_ts(), selected_style=_tsa()),
-                dcc.Tab(label="WR", value="wr26", style=_ts(), selected_style=_tsa()),
-                dcc.Tab(label="TE", value="te26", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="SOS", value="sos26", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="Play Callers", value="playcallers", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="O-Line", value="oline", style=_ts(), selected_style=_tsa()),
@@ -558,6 +554,8 @@ app.layout = html.Div([
                 dcc.Tab(label="Coaching", value="coaching", style=_ts(), selected_style=_tsa()),
             ], colors={"border": BORDER, "primary": ACCENT, "background": "transparent"},
                style={"borderBottom": f"1px solid {BORDER}"}),
+            dcc.Store(id="rankings26-pos", data="Overall"),
+            dcc.Store(id="liverankings26-pos", data="Overall"),
             html.Div(id="c2026", style={"paddingTop": "18px"}),
         ]),
 
@@ -613,6 +611,22 @@ def pick_season(a, b, c):
     if trig: return trig["index"]
     return "2026"
 
+@app.callback(Output("rankings26-pos", "data"),
+              Input({"type": "rankpos-pill", "scope": "rankings26", "index": ALL}, "n_clicks"),
+              prevent_initial_call=True)
+def pick_rankings26_pos(_):
+    trig = ctx.triggered_id
+    if trig: return trig["index"]
+    return "Overall"
+
+@app.callback(Output("liverankings26-pos", "data"),
+              Input({"type": "rankpos-pill", "scope": "liverankings26", "index": ALL}, "n_clicks"),
+              prevent_initial_call=True)
+def pick_liverankings26_pos(_):
+    trig = ctx.triggered_id
+    if trig: return trig["index"]
+    return "Overall"
+
 @app.callback(
     Output("v2026", "style"), Output("vhist", "style"),
     Output("badge", "children"), Output("stat-cards", "children"),
@@ -629,49 +643,60 @@ def toggle_season(s):
     return {"display": "none"}, {"display": "block"}, badge, cards
 
 # ── 2026 TABS ─────────────────────────────────────────────────────────────────
-@app.callback(Output("c2026", "children"), Input("t2026", "value"))
-def render_2026(tab):
-    pos_map = {"qb26": "QB", "rb26": "RB", "wr26": "WR", "te26": "TE"}
+POS_TOGGLE_OPTS = ["Overall", "QB", "RB", "WR", "TE"]
+POS_TOGGLE_LABELS = {"Overall": "Overall", "QB": "Quarterbacks", "RB": "Running Backs",
+                      "WR": "Wide Receivers", "TE": "Tight Ends"}
 
+def pos_toggle_row(scope, current):
+    return html.Div([
+        html.Button(o, id={"type": "rankpos-pill", "scope": scope, "index": o}, n_clicks=0,
+                    className=f"season-pill{' sel' if o == current else ''}")
+        for o in POS_TOGGLE_OPTS
+    ], style={"display": "flex", "gap": "8px", "marginBottom": "16px"})
+
+def render_rankings_grid(scope, df, pos_value, title, sub_overall, sub_pos):
+    if df.empty: return empty_msg()
+    d = df.copy()
+    if pos_value != "Overall" and "position" in d.columns:
+        d = d[d["position"] == pos_value]
+    if pos_value == "Overall":
+        keep = [c for c in ["consensus_rank", "player", "position", "team", "consensus_pos_rank"] if c in d.columns]
+        extra_rename = {"Pos": "Position"}
+    else:
+        keep = [c for c in ["consensus_rank", "player", "team", "consensus_pos_rank"] if c in d.columns]
+        extra_rename = {}
+    d = d[keep].sort_values("consensus_rank")
+    rn = d.rename(columns=COL_LABELS).rename(columns={"Consensus Rank": "Rank", "Pos Rank": "Consensus Pos Rank", **extra_rename})
+    defs = []
+    for c in rn.columns:
+        dcol = {"field": c, "headerName": c, "sortable": True, "resizable": True, "flex": 1, "minWidth": 100}
+        if c == "Player": dcol.update({"pinned": "left", "width": 200, "minWidth": 200, "flex": 0, "cellStyle": {"fontWeight": "700", "color": TEXT}})
+        if c == "Rank": dcol.update({"width": 70, "minWidth": 70, "flex": 0, "cellStyle": {"color": TFAINT, "fontFamily": FONT_MONO}})
+        if c == "Position": dcol.update({"width": 90, "minWidth": 90, "flex": 0, "cellStyle": pos_style_js()})
+        if c == "Consensus Pos Rank": dcol.update({"cellStyle": pos_rank_style_js()})
+        defs.append(dcol)
+    label = POS_TOGGLE_LABELS[pos_value]
+    sub = sub_overall if pos_value == "Overall" else sub_pos
+    return html.Div([
+        pos_toggle_row(scope, pos_value),
+        sec(f"{title} · {label}", sub=sub),
+        make_grid(f"g-{scope}", rn.fillna("—").to_dict("records"), defs, 600),
+    ])
+
+@app.callback(Output("c2026", "children"), Input("t2026", "value"),
+              Input("rankings26-pos", "data"), Input("liverankings26-pos", "data"))
+def render_2026(tab, rankings26_pos, liverankings26_pos):
     if tab == "rankings26":
-        if master.empty: return empty_msg()
-        df = master.copy()
-        keep = [c for c in ["consensus_rank", "player", "position", "team", "consensus_pos_rank"] if c in df.columns]
-        df = df[keep].sort_values("consensus_rank")
-        rn = df.rename(columns=COL_LABELS).rename(columns={"Consensus Rank": "Rank", "Pos": "Position", "Pos Rank": "Consensus Pos Rank"})
-        defs = []
-        for c in rn.columns:
-            d = {"field": c, "headerName": c, "sortable": True, "resizable": True, "flex": 1, "minWidth": 100}
-            if c == "Player": d.update({"pinned": "left", "width": 200, "minWidth": 200, "flex": 0, "cellStyle": {"fontWeight": "700", "color": TEXT}})
-            if c == "Rank": d.update({"width": 70, "minWidth": 70, "flex": 0, "cellStyle": {"color": TFAINT, "fontFamily": FONT_MONO}})
-            if c == "Position": d.update({"width": 90, "minWidth": 90, "flex": 0, "cellStyle": pos_style_js()})
-            if c == "Consensus Pos Rank": d.update({"cellStyle": pos_rank_style_js()})
-            defs.append(d)
-        return html.Div([
-            sec("2026 Pre-Draft Rankings · Overall",
-                sub="All positions ranked together in overall order. Click a column to sort."),
-            make_grid("g-rankings26", rn.fillna("—").to_dict("records"), defs, 600),
-        ])
+        return render_rankings_grid(
+            "rankings26", master, rankings26_pos, "2026 Pre-Draft Rankings",
+            "All positions ranked together in overall order. Click a column to sort.",
+            "Preseason rankings — real season stats populate once games are played. Click a column to sort.")
 
-    if tab == "updatedrankings26":
-        if flock_live.empty: return empty_msg()
-        df = flock_live.copy()
-        keep = [c for c in ["consensus_rank", "player", "position", "team", "consensus_pos_rank"] if c in df.columns]
-        df = df[keep].sort_values("consensus_rank")
-        rn = df.rename(columns=COL_LABELS).rename(columns={"Consensus Rank": "Rank", "Pos": "Position", "Pos Rank": "Consensus Pos Rank"})
-        defs = []
-        for c in rn.columns:
-            d = {"field": c, "headerName": c, "sortable": True, "resizable": True, "flex": 1, "minWidth": 100}
-            if c == "Player": d.update({"pinned": "left", "width": 200, "minWidth": 200, "flex": 0, "cellStyle": {"fontWeight": "700", "color": TEXT}})
-            if c == "Rank": d.update({"width": 70, "minWidth": 70, "flex": 0, "cellStyle": {"color": TFAINT, "fontFamily": FONT_MONO}})
-            if c == "Position": d.update({"width": 90, "minWidth": 90, "flex": 0, "cellStyle": pos_style_js()})
-            if c == "Consensus Pos Rank": d.update({"cellStyle": pos_rank_style_js()})
-            defs.append(d)
-        return html.Div([
-            sec("2026 Updated Rankings · Overall",
-                sub="Live from Flock Fantasy's current board — unedited. Click a column to sort."),
-            make_grid("g-updatedrankings26", rn.fillna("—").to_dict("records"), defs, 600),
-        ])
+    if tab == "liverankings26":
+        return render_rankings_grid(
+            "liverankings26", flock_live, liverankings26_pos, "2026 Live Rankings",
+            "Live from Flock Fantasy's current board — unedited. Click a column to sort.",
+            "Live from Flock Fantasy's current board — unedited, filtered by position.")
 
     if tab == "draftsim26":
         if master.empty: return empty_msg()
@@ -685,29 +710,6 @@ def render_2026(tab):
                     "cursor": "pointer", "whiteSpace": "nowrap", "height": "fit-content", "marginTop": "2px"}),
             ], style={"display": "flex", "justifyContent": "space-between", "alignItems": "flex-start", "gap": "16px"}),
             html.Div(id="draftsim-board", style={"marginTop": "18px"}),
-        ])
-
-    if tab in pos_map:
-        if master.empty: return empty_msg()
-        pos = pos_map[tab]
-        df = master.copy()
-        if "position" in df.columns:
-            df = df[df["position"] == pos]
-        keep = [c for c in ["consensus_rank", "player", "team", "consensus_pos_rank"] if c in df.columns]
-        df = df[keep].sort_values("consensus_rank")
-        rn = df.rename(columns=COL_LABELS).rename(columns={"Consensus Rank": "Rank", "Pos Rank": "Consensus Pos Rank"})
-        defs = []
-        for c in rn.columns:
-            d = {"field": c, "headerName": c, "sortable": True, "resizable": True, "flex": 1, "minWidth": 100}
-            if c == "Player": d.update({"pinned": "left", "width": 200, "minWidth": 200, "flex": 0, "cellStyle": {"fontWeight": "700", "color": TEXT}})
-            if c == "Rank": d.update({"width": 70, "minWidth": 70, "flex": 0, "cellStyle": {"color": TFAINT, "fontFamily": FONT_MONO}})
-            if c == "Consensus Pos Rank": d.update({"cellStyle": pos_rank_style_js()})
-            defs.append(d)
-        label = {"QB": "Quarterbacks", "RB": "Running Backs", "WR": "Wide Receivers", "TE": "Tight Ends"}[pos]
-        return html.Div([
-            sec(f"2026 Consensus PPR Rankings · {label}",
-                sub="Preseason rankings — real season stats populate once games are played. Click a column to sort."),
-            make_grid(f"g-{tab}", rn.fillna("—").to_dict("records"), defs, 600),
         ])
 
     if tab == "sos26":
