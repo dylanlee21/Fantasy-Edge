@@ -646,7 +646,7 @@ def render_2026(tab):
             defs.append(d)
         return html.Div([
             sec("2026 Consensus PPR Rankings · Overall",
-                sub="All positions ranked together, following Flock Fantasy's exact overall order. Click a column to sort."),
+                sub="All positions ranked together in overall order. Click a column to sort."),
             make_grid("g-rankings26", rn.fillna("—").to_dict("records"), defs, 600),
         ])
 
@@ -655,7 +655,7 @@ def render_2026(tab):
         return html.Div([
             html.Div([
                 sec("2026 Draft Sim · Big Board",
-                    sub="All positions ranked together, following Flock Fantasy's exact overall order. Click the ✕ when a player is drafted to remove them from the board — the top remaining player is always your best player available."),
+                    sub="All positions ranked together in overall order. Click the ✕ when a player is drafted to remove them from the board — the top remaining player is always your best player available."),
                 html.Button("Reset Board", id={"type": "draftsim-reset", "index": 0}, n_clicks=0, style={
                     "background": SURF2, "border": f"1px solid {BORDER}", "color": TEXT,
                     "borderRadius": "8px", "padding": "9px 16px", "fontSize": "12.5px", "fontWeight": "600",
