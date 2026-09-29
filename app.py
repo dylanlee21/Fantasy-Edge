@@ -617,7 +617,7 @@ def pick_season(a, b, c):
 )
 def toggle_season(s):
     if s == "2026":
-        badge = html.Span("2026 · PRESEASON CONSENSUS RANKINGS", className="badge")
+        badge = html.Span("2026 · PRE-DRAFT RANKINGS", className="badge")
         return {"display": "block"}, {"display": "none"}, badge, []
     badge = html.Span(f"{s} · REGULAR SEASON STATS", className="badge")
     data = get_data(s)
