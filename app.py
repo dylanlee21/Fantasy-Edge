@@ -348,9 +348,11 @@ def load_year(year):
 
 def load_2026():
     b = os.path.join(DATA_DIR, "2026")
-    return _read(os.path.join(b, "master_rankings.csv")), _read(os.path.join(b, "sos_2026.csv"))
+    return (_read(os.path.join(b, "master_rankings.csv")),
+            _read(os.path.join(b, "sos_2026.csv")),
+            _read(os.path.join(b, "flock_live_rankings.csv")))
 
-master, sos_2026 = load_2026()
+master, sos_2026, flock_live = load_2026()
 data_2025 = load_year(2025)
 data_2024 = load_year(2024)
 
@@ -542,7 +544,8 @@ app.layout = html.Div([
         # 2026 view
         html.Div(id="v2026", children=[
             dcc.Tabs(id="t2026", value="qb26", children=[
-                dcc.Tab(label="Rankings", value="rankings26", style=_ts(), selected_style=_tsa()),
+                dcc.Tab(label="Pre-Draft Rankings", value="rankings26", style=_ts(), selected_style=_tsa()),
+                dcc.Tab(label="Updated Rankings", value="updatedrankings26", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="Draft Sim", value="draftsim26", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="QB", value="qb26", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="RB", value="rb26", style=_ts(), selected_style=_tsa()),
@@ -617,7 +620,7 @@ def pick_season(a, b, c):
 )
 def toggle_season(s):
     if s == "2026":
-        badge = html.Span("2026 · PRE-DRAFT RANKINGS", className="badge")
+        badge = html.Span("2026 · PRESEASON CONSENSUS RANKINGS", className="badge")
         return {"display": "block"}, {"display": "none"}, badge, []
     badge = html.Span(f"{s} · REGULAR SEASON STATS", className="badge")
     data = get_data(s)
@@ -645,9 +648,29 @@ def render_2026(tab):
             if c == "Consensus Pos Rank": d.update({"cellStyle": pos_rank_style_js()})
             defs.append(d)
         return html.Div([
-            sec("2026 Consensus PPR Rankings · Overall",
+            sec("2026 Pre-Draft Rankings · Overall",
                 sub="All positions ranked together in overall order. Click a column to sort."),
             make_grid("g-rankings26", rn.fillna("—").to_dict("records"), defs, 600),
+        ])
+
+    if tab == "updatedrankings26":
+        if flock_live.empty: return empty_msg()
+        df = flock_live.copy()
+        keep = [c for c in ["consensus_rank", "player", "position", "team", "consensus_pos_rank"] if c in df.columns]
+        df = df[keep].sort_values("consensus_rank")
+        rn = df.rename(columns=COL_LABELS).rename(columns={"Consensus Rank": "Rank", "Pos": "Position", "Pos Rank": "Consensus Pos Rank"})
+        defs = []
+        for c in rn.columns:
+            d = {"field": c, "headerName": c, "sortable": True, "resizable": True, "flex": 1, "minWidth": 100}
+            if c == "Player": d.update({"pinned": "left", "width": 200, "minWidth": 200, "flex": 0, "cellStyle": {"fontWeight": "700", "color": TEXT}})
+            if c == "Rank": d.update({"width": 70, "minWidth": 70, "flex": 0, "cellStyle": {"color": TFAINT, "fontFamily": FONT_MONO}})
+            if c == "Position": d.update({"width": 90, "minWidth": 90, "flex": 0, "cellStyle": pos_style_js()})
+            if c == "Consensus Pos Rank": d.update({"cellStyle": pos_rank_style_js()})
+            defs.append(d)
+        return html.Div([
+            sec("2026 Updated Rankings · Overall",
+                sub="Live from Flock Fantasy's current board — unedited. Click a column to sort."),
+            make_grid("g-updatedrankings26", rn.fillna("—").to_dict("records"), defs, 600),
         ])
 
     if tab == "draftsim26":
