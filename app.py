@@ -304,16 +304,16 @@ MUST_AVOID = {
     "Late Round (8+)":    ["Dallas Goedert","Khalil Shakir","Jacory Croskey-Merritt","Calvin Ridley"],
 }
 TARGET_PICKS = {
-    "Round 1":  ["Bijan Robinson","Jahmyr Gibbs","Puka Nacua","Amon-Ra St. Brown","James Cook III"],
-    "Round 2":  ["Omarion Hampton","De'Von Achane","Chase Brown","Brock Bowers"],
-    "Round 3":  ["Chris Olave","Malik Nabers","Javonte Williams"],
+    "Round 1":  ["Jahmyr Gibbs","Bijan Robinson","Jaxon Smith-Njigba","Puka Nacua","Amon-Ra St. Brown","James Cook III"],
+    "Round 2":  ["De'Von Achane","Chase Brown","Omarion Hampton","Brock Bowers"],
+    "Round 3":  ["Chris Olave","Malik Nabers","Javonte Williams","Zay Flowers"],
     "Round 4":  ["Cam Skattebo","Ladd McConkey","Emeka Egbuka","Tetairoa McMillan","DeVonta Smith"],
-    "Round 5":  ["Rome Odunze","Bhayshul Tuten","Quinshon Judkins"],
-    "Round 6":  ["Parker Washington","Christian Watson","Jalen Hurts","Carnell Tate","Mike Evans"],
+    "Round 5":  ["Rome Odunze","Bhayshul Tuten"],
+    "Round 6":  ["Parker Washington","Christian Watson","Carnell Tate","Mike Evans"],
     "Round 7":  ["Justin Herbert","Tucker Kraft"],
     "Round 8":  ["Tucker Kraft","Sam LaPorta","Michael Wilson"],
     "Round 9":  ["J.K. Dobbins","Michael Pittman Jr.","Kenneth Gainwell","Josh Downs"],
-    "Round 10": ["Matthew Golden","George Kittle"],
+    "Round 10": ["Matthew Golden","George Kittle","Tyler Shough"],
     "Round 11": ["KC Concepcion","Aaron Jones Sr.","Isaiah Likely"],
 }
 UNDERVALUED = [
