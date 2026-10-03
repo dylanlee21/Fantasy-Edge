@@ -295,12 +295,12 @@ OLINE_2025_DATA = [
 # ── DRAFT NOTES DATA (kept from prior build) ────────────────────────────────────
 MUST_DRAFT = {
     "Early Round (1-3)":  ["Omarion Hampton","Ashton Jeanty","Malik Nabers","Chase Brown","James Cook III","Brock Bowers","De'Von Achane"],
-    "Mid Round (4-7)":    ["Ladd McConkey","TreVeyon Henderson","Cam Skattebo","Christian Watson","Emeka Egbuka","Justin Herbert","Bhayshul Tuten","Javonte Williams","DeVonta Smith"],
+    "Mid Round (4-7)":    ["Zay Flowers","Ladd McConkey","TreVeyon Henderson","Cam Skattebo","Christian Watson","Emeka Egbuka","Justin Herbert","Bhayshul Tuten","Javonte Williams","DeVonta Smith"],
     "Late Round (8+)":    ["Tucker Kraft","Jadarian Price","George Kittle"],
 }
 MUST_AVOID = {
     "Early Round (1-3)":  ["Trey McBride","Christian McCaffrey","Jeremiyah Love","George Pickens"],
-    "Mid Round (4-7)":    ["Davante Adams","Tyler Warren","Bucky Irving"],
+    "Mid Round (4-7)":    ["Davante Adams","Tyler Warren","Bucky Irving","Luther Burden"],
     "Late Round (8+)":    ["Dallas Goedert","Khalil Shakir","Jacory Croskey-Merritt","Calvin Ridley"],
 }
 TARGET_PICKS = {
