@@ -307,7 +307,7 @@ TARGET_PICKS = {
     "Round 1":  ["Jahmyr Gibbs","Bijan Robinson","Jaxon Smith-Njigba","Puka Nacua","Amon-Ra St. Brown","James Cook III"],
     "Round 2":  ["De'Von Achane","Chase Brown","Omarion Hampton","Brock Bowers"],
     "Round 3":  ["Chris Olave","Malik Nabers","Javonte Williams","Zay Flowers"],
-    "Round 4":  ["Cam Skattebo","Ladd McConkey","Emeka Egbuka","Tetairoa McMillan","DeVonta Smith"],
+    "Round 4":  ["Cam Skattebo","Ladd McConkey","Emeka Egbuka","Tetairoa McMillan","DeVonta Smith","Tee Higgins"],
     "Round 5":  ["Rome Odunze","Bhayshul Tuten"],
     "Round 6":  ["Parker Washington","Christian Watson","Carnell Tate","Mike Evans"],
     "Round 7":  ["Justin Herbert","Tucker Kraft"],
