@@ -8,6 +8,7 @@ from dash import Dash, html, dcc, Input, Output, State, ctx, ALL, no_update
 import dash_ag_grid as dag
 import pandas as pd
 import os
+import math
 
 # ── INIT ──────────────────────────────────────────────────────────────────────
 app    = Dash(__name__, suppress_callback_exceptions=True, title="Fantasy Edge")
@@ -546,6 +547,7 @@ app.layout = html.Div([
             dcc.Tabs(id="t2026", value="rankings26", children=[
                 dcc.Tab(label="Pre-Draft Rankings", value="rankings26", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="Live Rankings", value="liverankings26", style=_ts(), selected_style=_tsa()),
+                dcc.Tab(label="Trade Analyzer", value="trade26", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="Draft Sim", value="draftsim26", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="SOS", value="sos26", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="Play Callers", value="playcallers", style=_ts(), selected_style=_tsa()),
@@ -683,6 +685,201 @@ def render_rankings_grid(scope, df, pos_value, title, sub_overall, sub_pos):
         make_grid(f"g-{scope}", rn.fillna("—").to_dict("records"), defs, 600),
     ])
 
+# ── TRADE ANALYZER ────────────────────────────────────────────────────────────
+# Values come from Dylan's Live Rankings (overall rank, all positions together).
+# League format is fixed: 12-team PPR, 1QB/2RB/2WR/1TE/1FLEX/K/DST, 7 bench.
+#
+#   value(rank) = 10000 · e^(-TRADE_K · (rank − 1))
+#
+# Anti-stacking: on each side the best player counts in full; every extra player
+# only counts for the part of his value above replacement level (≈ the 170th
+# player, roughly what's rostered in this league format), and that surplus is
+# discounted geometrically (×0.33, ×0.11, ×0.036 …). So a package can never be
+# worth more than ~1.5× its best player, no matter how many pieces are piled on.
+TRADE_K         = 0.025
+TRADE_DEPTH     = 0.33
+TRADE_REPL_RANK = 170
+TRADE_BANDS     = [(5, 0), (15, 1), (30, 2)]   # (max % diff, meter level); above 30% = level 3
+
+def trade_value(rank):
+    return 10000 * math.exp(-TRADE_K * (int(rank) - 1))
+
+TRADE_REPL_VALUE = trade_value(TRADE_REPL_RANK)
+
+def trade_side_breakdown(ranks):
+    """Return ([(rank, raw, counted)], total) for one side, best player first."""
+    vals = sorted(((r, trade_value(r)) for r in ranks), key=lambda x: -x[1])
+    out, total = [], 0.0
+    for i, (r, v) in enumerate(vals):
+        counted = v if i == 0 else max(0.0, v - TRADE_REPL_VALUE) * TRADE_DEPTH ** i
+        out.append((r, v, counted))
+        total += counted
+    return out, total
+
+def trade_side_total(ranks):
+    return trade_side_breakdown(ranks)[1]
+
+def trade_verdict(a, b):
+    hi = max(a, b)
+    pct = abs(a - b) / hi * 100 if hi else 0.0
+    level = 3
+    for cap, lvl in TRADE_BANDS:
+        if pct <= cap:
+            level = lvl
+            break
+    winner = "A" if a > b else "B"
+    text = {0: "Fair trade",
+            1: f"Fair · slight edge to Side {winner}",
+            2: f"Favors Side {winner}",
+            3: f"Robbery · Side {winner} wins"}[level]
+    return pct, level, winner, text
+
+def _live_lookup():
+    if flock_live.empty: return {}
+    return {int(r["consensus_rank"]): r for r in flock_live.to_dict("records")}
+
+TRADE_LEVEL_C = {0: GREEN, 1: ACCENT2, 2: "#fb923c", 3: RED}
+
+def _trade_player_options():
+    return [{"label": f"{r['player']} · {r['consensus_pos_rank']} · #{int(r['consensus_rank'])}",
+             "value": int(r["consensus_rank"])}
+            for r in flock_live.sort_values("consensus_rank").to_dict("records")]
+
+def render_trade_analyzer():
+    if flock_live.empty: return empty_msg()
+    opts = _trade_player_options()
+    def side_picker(side):
+        return html.Div([
+            html.Div(f"SIDE {side} RECEIVES", style={"fontSize": "11px", "fontWeight": "700", "color": TDIM,
+                                                     "letterSpacing": ".08em", "marginBottom": "8px"}),
+            dcc.Dropdown(id=f"trade-{side.lower()}", options=opts, value=[], multi=True,
+                         placeholder="Search players…", persistence=True, persistence_type="session"),
+        ], style={"flex": "1", "minWidth": "280px"})
+    return html.Div([
+        sec("2026 Trade Analyzer",
+            sub="Valued off your Live Rankings by overall rank · 12-team PPR · 1QB/2RB/2WR/1TE/1FLEX · "
+                "stacking lesser players doesn't add up to a star."),
+        html.Div([side_picker("A"), side_picker("B")], style={"display": "flex", "gap": "18px", "flexWrap": "wrap"}),
+        html.Div(id="trade-result", style={"marginTop": "22px"}),
+    ])
+
+def _trade_meter(level, winner):
+    segs = []
+    for side, order in (("A", [3, 2, 1]), ("B", [1, 2, 3])):
+        for n in order:
+            lit = level >= n and side == winner
+            segs.append(html.Div(style={"flex": "1", "height": "10px", "borderRadius": "4px",
+                                        "background": TRADE_LEVEL_C[level] if lit else BORDER}))
+        if side == "A":
+            segs.append(html.Div(style={"width": "10px", "height": "10px", "borderRadius": "50%",
+                                        "background": GREEN if level == 0 else BORDER}))
+    return html.Div(segs, style={"display": "flex", "gap": "6px", "alignItems": "center"})
+
+def _trade_side_card(side, ranks, lookup):
+    rows, total = trade_side_breakdown(ranks)
+    items = []
+    for i, (r, raw, counted) in enumerate(rows):
+        p = lookup.get(r, {})
+        pos = str(p.get("position", ""))
+        note = "full value" if i == 0 else f"depth piece · {round(counted / raw * 100) if raw else 0}% counted"
+        items.append(html.Div([
+            html.Div([
+                html.Div(p.get("player", "?"), style={"fontWeight": "700", "fontSize": "13.5px"}),
+                html.Div([
+                    html.Span(p.get("consensus_pos_rank", ""), style={"color": POS_C.get(pos, TEXT), "fontWeight": "700", "marginRight": "8px"}),
+                    html.Span(f"#{r} overall · {p.get('team', '')}", style={"color": TFAINT}),
+                ], style={"fontSize": "11.5px", "marginTop": "2px"}),
+            ]),
+            html.Div([
+                html.Div(f"{counted:,.0f}", style={"fontFamily": FONT_MONO, "fontWeight": "700", "fontSize": "14px",
+                                                    "color": TEXT if i == 0 else TDIM}),
+                html.Div(note, style={"fontSize": "10.5px", "color": TFAINT, "marginTop": "2px"}),
+            ], style={"textAlign": "right"}),
+        ], style={"display": "flex", "justifyContent": "space-between", "alignItems": "center",
+                  "padding": "10px 0", "borderBottom": f"1px solid {BORDER}"}))
+    return html.Div([
+        html.Div(f"SIDE {side} RECEIVES", style={"fontSize": "11px", "fontWeight": "700", "color": TDIM,
+                                                 "letterSpacing": ".08em", "marginBottom": "4px"}),
+        *items,
+        html.Div([html.Span("Trade value", style={"color": TDIM, "fontSize": "12px", "fontWeight": "600"}),
+                  html.Span(f"{total:,.0f}", style={"fontFamily": FONT_MONO, "fontWeight": "800", "fontSize": "18px", "color": ACCENT})],
+                 style={"display": "flex", "justifyContent": "space-between", "alignItems": "center", "paddingTop": "12px"}),
+    ], style={"flex": "1", "minWidth": "280px", "background": SURF, "border": f"1px solid {BORDER}",
+              "borderRadius": "10px", "padding": "16px 18px"})
+
+def _trade_balance(short_side, a, b, lookup, n=3):
+    """Players that, added to the short side, bring the trade closest to even."""
+    used = set(a) | set(b)
+    base_short, other = (a, b) if short_side == "A" else (b, a)
+    other_total = trade_side_total(other)
+    cands = []
+    for r in lookup:
+        if r in used: continue
+        new_total = trade_side_total(list(base_short) + [r])
+        cands.append((abs(new_total - other_total) / max(new_total, other_total), r))
+    cands.sort()
+    return [r for _, r in cands[:n]]
+
+@app.callback(Output("trade-result", "children"), Input("trade-a", "value"), Input("trade-b", "value"))
+def render_trade_result(a, b):
+    a, b = [int(x) for x in (a or [])], [int(x) for x in (b or [])]
+    if not a or not b:
+        return html.Div("Add players to both sides to see the verdict.",
+                        style={"color": TFAINT, "fontSize": "12.5px", "padding": "30px", "textAlign": "center",
+                               "border": f"1px dashed {BORDER}", "borderRadius": "10px"})
+    lookup = _live_lookup()
+    ta, tb = trade_side_total(a), trade_side_total(b)
+    pct, level, winner, text = trade_verdict(ta, tb)
+    verdict = html.Div([
+        html.Div([
+            html.Span("SIDE A", style={"color": TDIM, "fontSize": "11px", "fontWeight": "700", "letterSpacing": ".08em"}),
+            html.Span(text, style={"color": TRADE_LEVEL_C[level], "fontWeight": "800", "fontSize": "16px"}),
+            html.Span("SIDE B", style={"color": TDIM, "fontSize": "11px", "fontWeight": "700", "letterSpacing": ".08em"}),
+        ], style={"display": "flex", "justifyContent": "space-between", "alignItems": "center", "marginBottom": "10px"}),
+        _trade_meter(level, winner),
+        html.Div(f"{pct:.1f}% value difference", style={"textAlign": "center", "color": TFAINT, "fontSize": "11.5px",
+                                                        "marginTop": "8px", "fontFamily": FONT_MONO}),
+    ], style={"background": SURF, "border": f"1px solid {BORDER}", "borderRadius": "10px", "padding": "16px 18px",
+              "marginBottom": "16px"})
+
+    kids = [verdict,
+            html.Div([_trade_side_card("A", a, lookup), _trade_side_card("B", b, lookup)],
+                     style={"display": "flex", "gap": "16px", "flexWrap": "wrap"})]
+
+    if level > 0:
+        short = "B" if winner == "A" else "A"
+        picks = _trade_balance(short, a, b, lookup)
+        btns = []
+        for r in picks:
+            p = lookup.get(r, {})
+            pos = str(p.get("position", ""))
+            btns.append(html.Button([
+                html.Span(p.get("player", "?"), style={"fontWeight": "700", "color": TEXT, "marginRight": "8px"}),
+                html.Span(p.get("consensus_pos_rank", ""), style={"color": POS_C.get(pos, TEXT), "fontWeight": "700", "marginRight": "6px"}),
+                html.Span(f"#{r}", style={"color": TFAINT, "fontFamily": FONT_MONO}),
+            ], id={"type": "trade-bal", "side": short, "index": r}, n_clicks=0, className="toggle-btn",
+               style={"fontSize": "12.5px"}))
+        kids.append(html.Div([
+            html.Div(f"BALANCE · add one of these to Side {short} to even it out", style={
+                "fontSize": "11px", "fontWeight": "700", "color": ACCENT2, "letterSpacing": ".08em", "marginBottom": "10px"}),
+            html.Div(btns, style={"display": "flex", "flexWrap": "wrap", "gap": "4px"}),
+        ], style={"marginTop": "16px", "background": SURF, "border": f"1px solid {BORDER}", "borderRadius": "10px",
+                  "padding": "16px 18px"}))
+    return kids
+
+@app.callback(Output("trade-a", "value"), Output("trade-b", "value"),
+              Input({"type": "trade-bal", "side": ALL, "index": ALL}, "n_clicks"),
+              State("trade-a", "value"), State("trade-b", "value"),
+              prevent_initial_call=True)
+def add_balance_player(_, a, b):
+    trig = ctx.triggered_id
+    if not trig or not ctx.triggered or not ctx.triggered[0].get("value"):
+        return no_update, no_update
+    a, b = list(a or []), list(b or [])
+    if trig["side"] == "A" and trig["index"] not in a: a.append(trig["index"])
+    if trig["side"] == "B" and trig["index"] not in b: b.append(trig["index"])
+    return a, b
+
 @app.callback(Output("c2026", "children"), Input("t2026", "value"),
               Input("rankings26-pos", "data"), Input("liverankings26-pos", "data"))
 def render_2026(tab, rankings26_pos, liverankings26_pos):
@@ -697,6 +894,9 @@ def render_2026(tab, rankings26_pos, liverankings26_pos):
             "liverankings26", flock_live, liverankings26_pos, "2026 Live Rankings",
             "Live from Flock Fantasy's current board — unedited. Click a column to sort.",
             "Live from Flock Fantasy's current board — unedited, filtered by position.")
+
+    if tab == "trade26":
+        return render_trade_analyzer()
 
     if tab == "draftsim26":
         if master.empty: return empty_msg()
