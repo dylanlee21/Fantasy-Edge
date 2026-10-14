@@ -95,15 +95,44 @@ app.index_string = """<!DOCTYPE html>
     .ctrl-in:focus{border-color:#2dd4bf}
     .ctrl-lbl{font-size:10.5px;color:#5b6478;letter-spacing:.08em;text-transform:uppercase;
       margin-bottom:6px;font-weight:700}
-    .dash-dropdown-value-item, .dash-dropdown-value, .dash-dropdown-trigger,
-    .dash-dropdown-trigger-icon, .dash-dropdown-input{color:#0a0e14!important}
-    .dash-dropdown-menu, .dash-dropdown-option{background:#fff!important;color:#0a0e14!important}
-    .dash-dropdown-option:hover, .dash-dropdown-option--focused{background:#e6ebf2!important}
-    .Select-control, .Select-value-label, .Select-placeholder, .Select-input > input,
-    .Select-menu-outer, .Select-option, .Select-noresults, .VirtualizedSelectOption,
-    .Select--single > .Select-control .Select-value, .Select-arrow-zone{color:#0a0e14!important}
-    .Select-menu-outer, .Select-option{background:#fff!important}
-    .Select-option.is-focused{background:#e6ebf2!important}
+    /* ── Dropdowns (Dash 4) — dark theme to match the site ── */
+    .dash-dropdown{background:#10151d!important;border:1px solid #212a38!important;border-radius:10px!important;
+      color:#e6ebf2!important;min-height:44px;height:auto!important;padding:6px 10px!important;
+      box-shadow:none!important;transition:border-color .15s, box-shadow .15s;cursor:pointer}
+    .dash-dropdown:hover{border-color:#2dd4bf66!important}
+    .dash-dropdown[data-state=open], .dash-dropdown:focus-visible{border-color:#2dd4bf!important;
+      box-shadow:0 0 0 3px #2dd4bf22!important;outline:none}
+    .dash-dropdown-trigger{color:#e6ebf2!important;align-items:center}
+    .dash-dropdown-value{color:#e6ebf2!important;white-space:normal!important;overflow:visible!important;
+      display:flex!important;flex-wrap:wrap;gap:6px}
+    .dash-dropdown-placeholder{color:#5b6478!important}
+    .dash-dropdown-trigger-icon, .dash-dropdown-clear{color:#5b6478!important}
+    .dash-dropdown-clear:hover{color:#f87171!important}
+    .dash-dropdown-value-count{display:none!important}
+    /* multi-select values render as chips */
+    #trade-a .dash-dropdown-value-item, #trade-b .dash-dropdown-value-item{background:#132821;
+      border:1px solid #2dd4bf44;color:#e6ebf2;border-radius:6px;padding:3px 9px;font-size:12.5px;
+      font-weight:600;line-height:1.4}
+    .dash-dropdown-value-item::after, .dash-dropdown-value-item::before{content:none!important}
+    /* menu (rendered in a portal) */
+    .dash-dropdown-content{background:#10151d!important;border:1px solid #212a38!important;border-radius:10px!important;
+      box-shadow:0 12px 32px rgba(0,0,0,.55)!important;color:#e6ebf2!important;overflow:hidden;
+      max-height:min(340px, 60vh)!important}
+    .dash-dropdown-search-container{background:#141a24!important;border-bottom:1px solid #212a38!important}
+    .dash-dropdown-search{background:transparent!important;color:#e6ebf2!important;border:none!important;outline:none!important}
+    .dash-dropdown-search::placeholder{color:#5b6478}
+    .dash-dropdown-search-icon{color:#5b6478!important}
+    .dash-dropdown-actions{display:none!important}
+    .dash-dropdown-options{background:#10151d!important}
+    .dash-dropdown-option{background:transparent!important;color:#e6ebf2!important;font-size:13px;
+      padding:8px 12px!important;border-bottom:1px solid #161d29;cursor:pointer}
+    .dash-dropdown-option:hover, .dash-dropdown-option:focus, .dash-dropdown-option:focus-within,
+    .dash-dropdown-option--focused, .dash-dropdown-option[data-highlighted]{background:#161d29!important}
+    .dash-dropdown-option[aria-selected=true]{background:#132821!important;color:#2dd4bf!important;font-weight:600}
+    .dash-dropdown-option .dash-options-list-option-wrapper{display:none!important}
+    .dash-dropdown-search-container, .dash-dropdown-search-container:focus-within{border:none!important;
+      border-bottom:1px solid #212a38!important;border-radius:0!important;box-shadow:none!important;outline:none!important}
+    .dash-dropdown-search:focus{outline:none!important;box-shadow:none!important}
     .toggle-btn{background:#10151d;border:1px solid #212a38;color:#8b95a7;border-radius:8px;
       font-size:12px;font-weight:600;padding:8px 16px;cursor:pointer;margin-right:8px}
     .toggle-btn:hover,.toggle-btn.active{border-color:#2dd4bf;color:#2dd4bf;background:#132821}
@@ -510,8 +539,7 @@ def ctrl(label, child):
     return html.Div([html.Div(label, className="ctrl-lbl"), child])
 
 def dd_style(width="140px"):
-    return {"width": width, "background": SURF, "color": TEXT, "border": f"1px solid {BORDER}",
-            "borderRadius": "8px", "fontSize": "12.5px"}
+    return {"width": width, "fontSize": "12.5px"}
 
 def empty_msg(msg="No data available yet — run the data pipeline first."):
     return html.Div(msg, style={"color": TFAINT, "fontSize": "12.5px", "padding": "40px", "textAlign": "center"})
@@ -741,9 +769,19 @@ def _live_lookup():
 TRADE_LEVEL_C = {0: GREEN, 1: ACCENT2, 2: "#fb923c", 3: RED}
 
 def _trade_player_options():
-    return [{"label": f"{r['player']} · {r['consensus_pos_rank']} · #{int(r['consensus_rank'])}",
-             "value": int(r["consensus_rank"])}
-            for r in flock_live.sort_values("consensus_rank").to_dict("records")]
+    opts = []
+    for r in flock_live.sort_values("consensus_rank").to_dict("records"):
+        pos = str(r.get("position", ""))
+        label = html.Span([
+            html.Span(r["player"], style={"fontWeight": "600"}),
+            html.Span(r["consensus_pos_rank"], style={"color": POS_C.get(pos, TEXT), "fontWeight": "700",
+                                                      "fontSize": "11.5px", "marginLeft": "8px"}),
+            html.Span(f"#{int(r['consensus_rank'])}", style={"color": TFAINT, "fontFamily": FONT_MONO,
+                                                              "fontSize": "11.5px", "marginLeft": "6px"}),
+        ])
+        opts.append({"label": label, "value": int(r["consensus_rank"]),
+                     "search": f"{r['player']} {r['consensus_pos_rank']} {r.get('team', '')}"})
+    return opts
 
 def render_trade_analyzer():
     if flock_live.empty: return empty_msg()
