@@ -9,6 +9,7 @@ import dash_ag_grid as dag
 import pandas as pd
 import os
 import math
+import re
 
 # ── INIT ──────────────────────────────────────────────────────────────────────
 app    = Dash(__name__, suppress_callback_exceptions=True, title="Fantasy Edge")
@@ -143,6 +144,38 @@ app.index_string = """<!DOCTYPE html>
     .coach-card.neg{border-top:3px solid #f87171}
     .coach-card.neu{border-top:3px solid #5b6478}
     .app-shell{max-width:1400px;margin:0 auto}
+    .ros-team{background:#10151d;border:1px solid #212a38;border-radius:10px;margin-bottom:10px;overflow:hidden}
+    .ros-team.mine{border-color:#2dd4bf88;box-shadow:inset 3px 0 0 #2dd4bf}
+    .ros-team > summary{list-style:none;cursor:pointer;padding:14px 18px 14px 16px}
+    .ros-team > summary::-webkit-details-marker{display:none}
+    .ros-team > summary:hover{background:#121822}
+    .ros-team[open] .ros-caret{transform:rotate(180deg)}
+    .ros-caret{color:#5b6478;font-size:14px;transition:transform .15s}
+    .ros-rank{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:20px;width:30px;text-align:center}
+    .ros-tname{font-weight:700;font-size:14.5px;color:#e6ebf2}
+    .ros-you{margin-left:8px;font-size:10px;font-weight:800;letter-spacing:.08em;color:#0a0e14;background:#2dd4bf;
+      border-radius:4px;padding:2px 6px;vertical-align:2px}
+    .ros-meta{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:5px;font-size:11.5px;color:#8b95a7}
+    .ros-value{font-family:'JetBrains Mono',monospace;font-weight:700;color:#2dd4bf;background:#132821;
+      border:1px solid #2dd4bf44;border-radius:5px;padding:1px 8px}
+    .ros-stat{white-space:nowrap}
+    .ros-bar-track{margin-top:11px;background:#0c1118;border-radius:5px;height:18px;overflow:hidden}
+    .ros-bar{display:flex;height:100%}
+    .ros-seg{display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;color:#0a0e14;
+      font-family:'JetBrains Mono',monospace;min-width:18px;border-right:1px solid #0a0e14}
+    .ros-cols{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;padding:4px 18px 18px;
+      border-top:1px solid #212a38;background:#0d1219}
+    @media (max-width:900px){.ros-cols{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    .ros-col{min-width:0}
+    .ros-colhead{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin:12px 0 6px}
+    .ros-prow{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #161d29;font-size:12.5px}
+    .ros-pname{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#e6ebf2;font-weight:600}
+    .ros-ir{margin-left:6px;font-size:9.5px;font-weight:800;color:#f87171;border:1px solid #f8717155;border-radius:3px;padding:0 4px}
+    .ros-ovr{color:#5b6478;font-family:'JetBrains Mono',monospace;font-size:11.5px;width:38px;text-align:right}
+    .ros-badge{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;border:1px solid;border-radius:4px;
+      padding:1px 6px;min-width:44px;text-align:center}
+    .ros-legend-item{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:#8b95a7}
+    .ros-dot{width:10px;height:10px;border-radius:3px;display:inline-block}
     .trade-rm-btn{background:transparent;border:1px solid #212a38;color:#5b6478;border-radius:6px;
       width:26px;height:26px;font-size:12px;line-height:1;cursor:pointer;flex-shrink:0}
     .trade-rm-btn:hover{color:#f87171;border-color:#f8717166;background:#1d1010}
@@ -382,6 +415,7 @@ def load_2026():
             _read(os.path.join(b, "flock_live_rankings.csv")))
 
 master, sos_2026, flock_live = load_2026()
+league_rosters = _read(os.path.join(DATA_DIR, "2026", "league_rosters.csv"))
 data_2025 = load_year(2025)
 data_2024 = load_year(2024)
 
@@ -578,7 +612,7 @@ app.layout = html.Div([
                 dcc.Tab(label="Draft Sim", value="draftsim26", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="SOS", value="sos26", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="Play Callers", value="playcallers", style=_ts(), selected_style=_tsa()),
-                dcc.Tab(label="O-Line", value="oline", style=_ts(), selected_style=_tsa()),
+                dcc.Tab(label="League Rosters", value="rosters26", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="Draft Notes", value="draft", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="Coaching", value="coaching", style=_ts(), selected_style=_tsa()),
             ], colors={"border": BORDER, "primary": ACCENT, "background": "transparent"},
@@ -951,6 +985,171 @@ def update_trade(add_a, add_b, _reset, _rm, _bal, store):
         return store, no_update, no_update
     return no_update, no_update, no_update
 
+# ── LEAGUE ROSTERS (ESPN · ASU 26) ────────────────────────────────────────────
+# Rosters imported from ESPN into data/2026/league_rosters.csv. Every player is valued
+# with the same curve as the Trade Analyzer (your Live Rankings, overall rank).
+#  · Team value = best legal starting lineup (1QB/2RB/2WR/1TE/1FLEX) at full value
+#                 + bench depth at a steep discount (bench can't score for you).
+#  · Room rank   = each position group's weighted value (starters count most), ranked 1–12.
+MY_OWNER = "Dylan Lee"
+ROSTER_BENCH_W = [0.35, 0.25, 0.18, 0.12, 0.08, 0.05]
+ROOM_W = {"QB": [1, .15], "RB": [1, 1, .5, .25, .1], "WR": [1, 1, .6, .3, .15, .05], "TE": [1, .15]}
+ROOM_TIERS = {"QB": (6, 12), "RB": (12, 24), "WR": (12, 30), "TE": (6, 12)}   # (green ≤, yellow ≤)
+ROSTER_SLOT_TAG = {"IR": "IR"}
+
+def _name_key(n):
+    n = str(n).lower().replace(".", "").replace("'", "").replace("-", " ")
+    n = re.sub(r"\b(jr|sr|ii|iii|iv|v)\b", "", n)
+    return " ".join(n.split())
+
+NAME_ALIAS = {"kenny gainwell": "kenneth gainwell"}
+
+def _live_name_index():
+    idx = {}
+    if flock_live.empty: return idx
+    for r in flock_live.to_dict("records"):
+        idx.setdefault(_name_key(r["player"]), []).append(r)
+    return idx
+
+def _match_live(name, idx):
+    k = _name_key(name)
+    hits = idx.get(NAME_ALIAS.get(k, k), [])
+    if not hits: return None
+    with_team = [h for h in hits if str(h.get("team", "-")) not in ("-", "", "nan")]
+    return sorted(with_team or hits, key=lambda h: int(h["consensus_rank"]))[0]
+
+def build_league_model():
+    if league_rosters.empty or flock_live.empty: return [], []
+    idx = _live_name_index()
+    teams = {}
+    rostered = set()
+    for r in league_rosters.to_dict("records"):
+        t = teams.setdefault(int(r["team_id"]), {
+            "id": int(r["team_id"]), "name": r["team_name"], "owner": r["owner"], "record": r["record"],
+            "pf": float(r["points_for"]), "pa": float(r["points_against"]), "players": []})
+        pos = r["position"]
+        if pos not in ("QB", "RB", "WR", "TE"): continue
+        m = _match_live(r["player"], idx)
+        rank = int(m["consensus_rank"]) if m is not None else None
+        if rank: rostered.add(rank)
+        t["players"].append({
+            "name": m["player"] if m is not None else r["player"], "pos": pos, "slot": r["lineup_slot"],
+            "rank": rank, "pos_rank": m["consensus_pos_rank"] if m is not None else "NR",
+            "pos_num": int(str(m["consensus_pos_rank"])[len(pos):]) if m is not None else 999,
+            "value": trade_value(rank) if rank else 0.0})
+    for t in teams.values():
+        ps = sorted(t["players"], key=lambda p: -p["value"])
+        starters, used = [], set()
+        def take(pos_set, n):
+            for p in ps:
+                if n == 0: break
+                if id(p) in used or p["pos"] not in pos_set: continue
+                used.add(id(p)); starters.append(p); n -= 1
+        take({"QB"}, 1); take({"RB"}, 2); take({"WR"}, 2); take({"TE"}, 1); take({"RB", "WR", "TE"}, 1)
+        bench = [p for p in ps if id(p) not in used]
+        contrib = {"QB": 0.0, "RB": 0.0, "WR": 0.0, "TE": 0.0}
+        for p in starters: contrib[p["pos"]] += p["value"]
+        for w, p in zip(ROSTER_BENCH_W, bench): contrib[p["pos"]] += p["value"] * w
+        t["contrib"] = contrib
+        t["value"] = sum(contrib.values())
+        t["room_score"] = {}
+        for pos, ws in ROOM_W.items():
+            vals = [p["value"] for p in ps if p["pos"] == pos]
+            t["room_score"][pos] = sum(v * w for v, w in zip(vals, ws))
+        t["rooms"] = {pos: sorted([p for p in ps if p["pos"] == pos], key=lambda p: (p["rank"] or 9999))
+                      for pos in ROOM_W}
+    tl = sorted(teams.values(), key=lambda t: -t["value"])
+    for pos in ROOM_W:
+        for i, t in enumerate(sorted(tl, key=lambda t: -t["room_score"][pos]), 1):
+            t.setdefault("room_rank", {})[pos] = i
+    waivers = [r for r in flock_live.sort_values("consensus_rank").to_dict("records")
+               if int(r["consensus_rank"]) not in rostered and r["position"] in ROOM_W][:12]
+    return tl, waivers
+
+def _rank_color(n, total=12):
+    if n <= 3: return GREEN
+    if n <= 8: return ACCENT2
+    return RED
+
+def _tier_badge(pos, num, text):
+    g, y = ROOM_TIERS.get(pos, (6, 12))
+    c = GREEN if num <= g else (ACCENT2 if num <= y else RED)
+    return html.Span(text, className="ros-badge", style={"color": c, "background": c + "1f", "borderColor": c + "55"})
+
+def _roster_player_row(p):
+    tag = ROSTER_SLOT_TAG.get(p["slot"])
+    return html.Div([
+        html.Span([p["name"], html.Span(tag, className="ros-ir") if tag else None], className="ros-pname"),
+        html.Span(f"#{p['rank']}" if p["rank"] else "NR", className="ros-ovr"),
+        _tier_badge(p["pos"], p["pos_num"], p["pos_rank"]),
+    ], className="ros-prow")
+
+def _roster_team_row(i, t, max_value):
+    mine = t["owner"] == MY_OWNER
+    width = t["value"] / max_value * 100 if max_value else 0
+    segs = []
+    for pos in ("QB", "RB", "WR", "TE"):
+        share = t["contrib"][pos] / t["value"] * 100 if t["value"] else 0
+        segs.append(html.Div(str(t["room_rank"][pos]), className="ros-seg",
+                             style={"width": f"{share}%", "background": POS_C[pos]}))
+    stat = lambda k, v: html.Span([html.Span(k, style={"color": TFAINT, "marginRight": "5px"}), v], className="ros-stat")
+    summary = html.Summary([
+        html.Div([
+            html.Div(str(i), className="ros-rank", style={"color": _rank_color(i)}),
+            html.Div([
+                html.Div([
+                    html.Span(t["name"], className="ros-tname"),
+                    html.Span("YOU", className="ros-you") if mine else None,
+                ]),
+                html.Div([
+                    html.Span(f"{t['value'] / 10:,.0f}", className="ros-value"),
+                    stat("Owner", t["owner"]), stat("Record", t["record"]),
+                    stat("PF", f"{t['pf']:.2f}"), stat("PA", f"{t['pa']:.2f}"),
+                ], className="ros-meta"),
+            ], style={"flex": "1", "minWidth": "0"}),
+            html.Span("▾", className="ros-caret"),
+        ], style={"display": "flex", "alignItems": "center", "gap": "14px"}),
+        html.Div(html.Div(segs, className="ros-bar", style={"width": f"{width}%"}), className="ros-bar-track"),
+    ])
+    cols = []
+    for pos, label in (("QB", "QB Room"), ("RB", "RB Room"), ("WR", "WR Room"), ("TE", "TE Room")):
+        rr = t["room_rank"][pos]
+        cols.append(html.Div([
+            html.Div([html.Span(f"{label} ", style={"color": POS_C[pos]}),
+                      html.Span(f"#{rr}", style={"color": _rank_color(rr), "fontFamily": FONT_MONO})],
+                     className="ros-colhead"),
+            *[_roster_player_row(p) for p in t["rooms"][pos]],
+        ], className="ros-col"))
+    return html.Details([summary, html.Div(cols, className="ros-cols")],
+                        className="ros-team" + (" mine" if mine else ""), open=False)
+
+def render_league_rosters():
+    teams, waivers = build_league_model()
+    if not teams: return empty_msg("No league rosters loaded yet.")
+    max_v = max(t["value"] for t in teams)
+    legend = html.Div([html.Span([html.Span(className="ros-dot", style={"background": POS_C[p]}), p],
+                                 className="ros-legend-item") for p in ("QB", "RB", "WR", "TE")],
+                      style={"display": "flex", "gap": "14px", "marginBottom": "12px"})
+    waiver_col = html.Div([
+        html.Div("BEST AVAILABLE", className="ros-colhead", style={"color": ACCENT2}),
+        *[html.Div([
+            html.Span(w["player"], className="ros-pname"),
+            html.Span(f"#{int(w['consensus_rank'])}", className="ros-ovr"),
+            _tier_badge(w["position"], int(str(w["consensus_pos_rank"])[len(w["position"]):]), w["consensus_pos_rank"]),
+          ], className="ros-prow") for w in waivers],
+    ], className="ros-col", style={"background": SURF, "border": f"1px solid {BORDER}", "borderRadius": "10px",
+                                   "padding": "14px 16px"})
+    return html.Div([
+        sec("ASU 26 · League Rosters",
+            sub="Rosters imported from ESPN · teams ranked 1–12 by your Live Rankings (best starting lineup + bench depth) · "
+                "bar segments = each position group's share of team value, numbers = room rank · click a team to open it."),
+        legend,
+        html.Div([
+            html.Div([_roster_team_row(i, t, max_v) for i, t in enumerate(teams, 1)], style={"flex": "1", "minWidth": "0"}),
+            html.Div(waiver_col, style={"width": "290px", "flexShrink": "0"}),
+        ], style={"display": "flex", "gap": "16px", "alignItems": "flex-start", "flexWrap": "wrap"}),
+    ])
+
 @app.callback(Output("c2026", "children"), Input("t2026", "value"),
               Input("rankings26-pos", "data"), Input("liverankings26-pos", "data"))
 def render_2026(tab, rankings26_pos, liverankings26_pos):
@@ -1007,8 +1206,8 @@ def render_2026(tab, rankings26_pos, liverankings26_pos):
     if tab == "playcallers":
         return _render_playcallers()
 
-    if tab == "oline":
-        return _render_oline()
+    if tab == "rosters26":
+        return render_league_rosters()
 
     if tab == "coaching":
         return _render_coaching()
@@ -1506,25 +1705,6 @@ def _render_oline_hist(season_str):
         sec("2025 O-Line Run Block Rating",
             sub="2025 season O-line rank, trend, unit cohesion (1-5), projected 2026 rank, and whether the QB adds rushing juice. Click a column to sort."),
         make_grid("g-oline-h", records, defs, 900),
-    ])
-
-def _render_oline():
-    records = [{"Rk": rk, "Team": team, "Name": name, "Consensus Score": score}
-               for rk, team, name, score in OLINE_DATA]
-    defs = [
-        {"field": "Rk", "headerName": "#", "pinned": "left", "width": 56, "minWidth": 56, "flex": 0,
-         "sortable": True, "cellStyle": {"color": TFAINT, "fontFamily": FONT_MONO}},
-        {"field": "Team", "headerName": "Team", "width": 90, "minWidth": 90, "flex": 0, "sortable": True,
-         "cellStyle": {"fontWeight": "700", "color": TEXT, "fontFamily": FONT_MONO}},
-        {"field": "Name", "headerName": "Team Name", "flex": 1, "minWidth": 150, "sortable": True,
-         "cellStyle": {"color": TDIM}},
-        {"field": "Consensus Score", "headerName": "Consensus Score", "flex": 1, "minWidth": 150, "sortable": True,
-         "cellStyle": heat_style("Consensus Score", invert=True)},
-    ]
-    return html.Div([
-        sec("2026 O-Line Preseason Rankings — Consensus",
-            sub="Averaged across major preseason O-line rankings. Lower score = better offensive line. Click a column to sort."),
-        make_grid("g-oline", records, defs, 900),
     ])
 
 # ── COACHING CHANGES ──────────────────────────────────────────────────────────
