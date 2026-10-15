@@ -1162,8 +1162,8 @@ def render_2026(tab, rankings26_pos, liverankings26_pos):
     if tab == "liverankings26":
         return render_rankings_grid(
             "liverankings26", flock_live, liverankings26_pos, "2026 Live Rankings",
-            "Live from Flock Fantasy's current board — unedited. Click a column to sort.",
-            "Live from Flock Fantasy's current board — unedited, filtered by position.")
+            "Live player rankings updated weekly",
+            "Live player rankings updated weekly")
 
     if tab == "trade26":
         return render_trade_analyzer()
