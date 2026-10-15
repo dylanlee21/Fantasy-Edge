@@ -109,10 +109,6 @@ app.index_string = """<!DOCTYPE html>
     .dash-dropdown-trigger-icon, .dash-dropdown-clear{color:#5b6478!important}
     .dash-dropdown-clear:hover{color:#f87171!important}
     .dash-dropdown-value-count{display:none!important}
-    /* multi-select values render as chips */
-    #trade-a .dash-dropdown-value-item, #trade-b .dash-dropdown-value-item{background:#132821;
-      border:1px solid #2dd4bf44;color:#e6ebf2;border-radius:6px;padding:3px 9px;font-size:12.5px;
-      font-weight:600;line-height:1.4}
     .dash-dropdown-value-item::after, .dash-dropdown-value-item::before{content:none!important}
     /* menu (rendered in a portal) */
     .dash-dropdown-content{background:#10151d!important;border:1px solid #212a38!important;border-radius:10px!important;
@@ -147,6 +143,9 @@ app.index_string = """<!DOCTYPE html>
     .coach-card.neg{border-top:3px solid #f87171}
     .coach-card.neu{border-top:3px solid #5b6478}
     .app-shell{max-width:1400px;margin:0 auto}
+    .trade-rm-btn{background:transparent;border:1px solid #212a38;color:#5b6478;border-radius:6px;
+      width:26px;height:26px;font-size:12px;line-height:1;cursor:pointer;flex-shrink:0}
+    .trade-rm-btn:hover{color:#f87171;border-color:#f8717166;background:#1d1010}
   </style>
 </head>
 <body>
@@ -621,6 +620,8 @@ app.layout = html.Div([
 
     # Draft Sim state — list of drafted player names, persists across tab/season switches
     dcc.Store(id="draftsim-store", storage_type="session", data=[]),
+    # Trade Analyzer state — {"A": [ranks], "B": [ranks]}, persists across tab switches
+    dcc.Store(id="trade-store", storage_type="session", data={"A": [], "B": []}),
 
 ], style={"minHeight": "100vh", "background": BG})
 
@@ -771,15 +772,10 @@ TRADE_LEVEL_C = {0: GREEN, 1: ACCENT2, 2: "#fb923c", 3: RED}
 def _trade_player_options():
     opts = []
     for r in flock_live.sort_values("consensus_rank").to_dict("records"):
-        pos = str(r.get("position", ""))
-        label = html.Span([
-            html.Span(r["player"], style={"fontWeight": "600"}),
-            html.Span(r["consensus_pos_rank"], style={"color": POS_C.get(pos, TEXT), "fontWeight": "700",
-                                                      "fontSize": "11.5px", "marginLeft": "8px"}),
-            html.Span(f"#{int(r['consensus_rank'])}", style={"color": TFAINT, "fontFamily": FONT_MONO,
-                                                              "fontSize": "11.5px", "marginLeft": "6px"}),
-        ])
-        opts.append({"label": label, "value": int(r["consensus_rank"]),
+        # Plain-text labels: Dash 4's dropdown throws renderer errors when component labels are
+        # combined with a value that gets reset after each pick.
+        opts.append({"label": f"{r['player']} · {r['consensus_pos_rank']} · #{int(r['consensus_rank'])}",
+                     "value": int(r["consensus_rank"]),
                      "search": f"{r['player']} {r['consensus_pos_rank']} {r.get('team', '')}"})
     return opts
 
@@ -788,15 +784,23 @@ def render_trade_analyzer():
     opts = _trade_player_options()
     def side_picker(side):
         return html.Div([
-            html.Div(f"SIDE {side} RECEIVES", style={"fontSize": "11px", "fontWeight": "700", "color": TDIM,
-                                                     "letterSpacing": ".08em", "marginBottom": "8px"}),
-            dcc.Dropdown(id=f"trade-{side.lower()}", options=opts, value=[], multi=True,
-                         placeholder="Search players…", persistence=True, persistence_type="session"),
+            html.Div(f"ADD TO SIDE {side}", style={"fontSize": "11px", "fontWeight": "700", "color": TDIM,
+                                                   "letterSpacing": ".08em", "marginBottom": "8px"}),
+            # Single-select "add player" search: it clears itself after each pick, so the
+            # search box always re-opens focused and ready to type.
+            dcc.Dropdown(id=f"trade-add-{side.lower()}", options=opts, value=None, multi=False,
+                         searchable=True, clearable=False, placeholder="Search players to add…"),
         ], style={"flex": "1", "minWidth": "280px"})
     return html.Div([
-        sec("2026 Trade Analyzer",
-            sub="Valued off your Live Rankings by overall rank · 12-team PPR · 1QB/2RB/2WR/1TE/1FLEX · "
-                "stacking lesser players doesn't add up to a star."),
+        html.Div([
+            sec("2026 Trade Analyzer",
+                sub="Valued off your Live Rankings by overall rank · 12-team PPR · 1QB/2RB/2WR/1TE/1FLEX · "
+                    "stacking lesser players doesn't add up to a star."),
+            html.Button("Reset Trade", id="trade-reset", n_clicks=0, style={
+                "background": SURF2, "border": f"1px solid {BORDER}", "color": TEXT,
+                "borderRadius": "8px", "padding": "9px 16px", "fontSize": "12.5px", "fontWeight": "600",
+                "cursor": "pointer", "whiteSpace": "nowrap", "height": "fit-content", "marginTop": "2px"}),
+        ], style={"display": "flex", "justifyContent": "space-between", "alignItems": "flex-start", "gap": "16px"}),
         html.Div([side_picker("A"), side_picker("B")], style={"display": "flex", "gap": "18px", "flexWrap": "wrap"}),
         html.Div(id="trade-result", style={"marginTop": "22px"}),
     ])
@@ -814,7 +818,7 @@ def _trade_meter(level, winner):
     return html.Div(segs, style={"display": "flex", "gap": "6px", "alignItems": "center"})
 
 def _trade_side_card(side, ranks, lookup):
-    rows, total = trade_side_breakdown(ranks)
+    rows, total = trade_side_breakdown(ranks) if ranks else ([], 0.0)
     items = []
     for i, (r, raw, counted) in enumerate(rows):
         p = lookup.get(r, {})
@@ -827,14 +831,20 @@ def _trade_side_card(side, ranks, lookup):
                     html.Span(p.get("consensus_pos_rank", ""), style={"color": POS_C.get(pos, TEXT), "fontWeight": "700", "marginRight": "8px"}),
                     html.Span(f"#{r} overall · {p.get('team', '')}", style={"color": TFAINT}),
                 ], style={"fontSize": "11.5px", "marginTop": "2px"}),
-            ]),
+            ], style={"flex": "1"}),
             html.Div([
                 html.Div(f"{counted:,.0f}", style={"fontFamily": FONT_MONO, "fontWeight": "700", "fontSize": "14px",
                                                     "color": TEXT if i == 0 else TDIM}),
                 html.Div(note, style={"fontSize": "10.5px", "color": TFAINT, "marginTop": "2px"}),
             ], style={"textAlign": "right"}),
-        ], style={"display": "flex", "justifyContent": "space-between", "alignItems": "center",
+            html.Button("✕", id={"type": "trade-rm", "side": side, "index": r}, n_clicks=0,
+                        title="Remove from trade", className="trade-rm-btn"),
+        ], style={"display": "flex", "alignItems": "center", "gap": "14px",
                   "padding": "10px 0", "borderBottom": f"1px solid {BORDER}"}))
+    if not items:
+        items = [html.Div("No players yet — search above to add.", style={
+            "color": TFAINT, "fontSize": "12.5px", "padding": "18px 0", "textAlign": "center",
+            "borderBottom": f"1px solid {BORDER}"})]
     return html.Div([
         html.Div(f"SIDE {side} RECEIVES", style={"fontSize": "11px", "fontWeight": "700", "color": TDIM,
                                                  "letterSpacing": ".08em", "marginBottom": "4px"}),
@@ -858,14 +868,22 @@ def _trade_balance(short_side, a, b, lookup, n=3):
     cands.sort()
     return [r for _, r in cands[:n]]
 
-@app.callback(Output("trade-result", "children"), Input("trade-a", "value"), Input("trade-b", "value"))
-def render_trade_result(a, b):
-    a, b = [int(x) for x in (a or [])], [int(x) for x in (b or [])]
-    if not a or not b:
-        return html.Div("Add players to both sides to see the verdict.",
-                        style={"color": TFAINT, "fontSize": "12.5px", "padding": "30px", "textAlign": "center",
-                               "border": f"1px dashed {BORDER}", "borderRadius": "10px"})
+@app.callback(Output("trade-result", "children"), Input("trade-store", "data"),
+              Input("trade-add-a", "id"))   # 2nd input makes it re-render when the tab is reopened
+def render_trade_result(store, _):
+    store = store or {}
+    a = [int(x) for x in store.get("A", [])]
+    b = [int(x) for x in store.get("B", [])]
     lookup = _live_lookup()
+    a = [r for r in a if r in lookup]
+    b = [r for r in b if r in lookup]
+    cards = html.Div([_trade_side_card("A", a, lookup), _trade_side_card("B", b, lookup)],
+                     style={"display": "flex", "gap": "16px", "flexWrap": "wrap"})
+    if not a or not b:
+        return [html.Div("Add players to both sides to see the verdict.",
+                         style={"color": TFAINT, "fontSize": "12.5px", "padding": "22px", "textAlign": "center",
+                                "border": f"1px dashed {BORDER}", "borderRadius": "10px", "marginBottom": "16px"}),
+                cards]
     ta, tb = trade_side_total(a), trade_side_total(b)
     pct, level, winner, text = trade_verdict(ta, tb)
     verdict = html.Div([
@@ -880,10 +898,7 @@ def render_trade_result(a, b):
     ], style={"background": SURF, "border": f"1px solid {BORDER}", "borderRadius": "10px", "padding": "16px 18px",
               "marginBottom": "16px"})
 
-    kids = [verdict,
-            html.Div([_trade_side_card("A", a, lookup), _trade_side_card("B", b, lookup)],
-                     style={"display": "flex", "gap": "16px", "flexWrap": "wrap"})]
-
+    kids = [verdict, cards]
     if level > 0:
         short = "B" if winner == "A" else "A"
         picks = _trade_balance(short, a, b, lookup)
@@ -905,18 +920,36 @@ def render_trade_result(a, b):
                   "padding": "16px 18px"}))
     return kids
 
-@app.callback(Output("trade-a", "value"), Output("trade-b", "value"),
+@app.callback(Output("trade-store", "data"),
+              Output("trade-add-a", "value"), Output("trade-add-b", "value"),
+              Input("trade-add-a", "value"), Input("trade-add-b", "value"),
+              Input("trade-reset", "n_clicks"),
+              Input({"type": "trade-rm", "side": ALL, "index": ALL}, "n_clicks"),
               Input({"type": "trade-bal", "side": ALL, "index": ALL}, "n_clicks"),
-              State("trade-a", "value"), State("trade-b", "value"),
+              State("trade-store", "data"),
               prevent_initial_call=True)
-def add_balance_player(_, a, b):
+def update_trade(add_a, add_b, _reset, _rm, _bal, store):
     trig = ctx.triggered_id
-    if not trig or not ctx.triggered or not ctx.triggered[0].get("value"):
-        return no_update, no_update
-    a, b = list(a or []), list(b or [])
-    if trig["side"] == "A" and trig["index"] not in a: a.append(trig["index"])
-    if trig["side"] == "B" and trig["index"] not in b: b.append(trig["index"])
-    return a, b
+    val = ctx.triggered[0].get("value") if ctx.triggered else None
+    if trig is None or not val:          # ignore component creation / cleared dropdowns
+        return no_update, no_update, no_update
+    store = {"A": list((store or {}).get("A", [])), "B": list((store or {}).get("B", []))}
+    if trig == "trade-reset":
+        return {"A": [], "B": []}, None, None
+    if trig in ("trade-add-a", "trade-add-b"):
+        side = "A" if trig == "trade-add-a" else "B"
+        r = int(val)
+        other = "B" if side == "A" else "A"
+        if r in store[other]: store[other].remove(r)   # a player can only be on one side
+        if r not in store[side]: store[side].append(r)
+        return store, None, None
+    if isinstance(trig, dict) and trig.get("type") == "trade-rm":
+        store[trig["side"]] = [x for x in store[trig["side"]] if x != trig["index"]]
+        return store, no_update, no_update
+    if isinstance(trig, dict) and trig.get("type") == "trade-bal":
+        if trig["index"] not in store[trig["side"]]: store[trig["side"]].append(trig["index"])
+        return store, no_update, no_update
+    return no_update, no_update, no_update
 
 @app.callback(Output("c2026", "children"), Input("t2026", "value"),
               Input("rankings26-pos", "data"), Input("liverankings26-pos", "data"))
