@@ -759,7 +759,7 @@ def render_rankings_grid(scope, df, pos_value, title, sub_overall, sub_pos):
 # player, roughly what's rostered in this league format), and that surplus is
 # discounted geometrically (×0.33, ×0.11, ×0.036 …). So a package can never be
 # worth more than ~1.5× its best player, no matter how many pieces are piled on.
-TRADE_K         = 0.025
+TRADE_K         = 0.022
 TRADE_DEPTH     = 0.33
 TRADE_REPL_RANK = 170
 TRADE_BANDS     = [(5, 0), (15, 1), (30, 2)]   # (max % diff, meter level); above 30% = level 3
