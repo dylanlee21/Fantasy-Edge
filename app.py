@@ -416,6 +416,7 @@ def load_2026():
 
 master, sos_2026, flock_live = load_2026()
 league_rosters = _read(os.path.join(DATA_DIR, "2026", "league_rosters.csv"))
+live_stats = _read(os.path.join(DATA_DIR, "2026", "live_player_stats.csv"))
 data_2025 = load_year(2025)
 data_2024 = load_year(2024)
 
@@ -735,7 +736,10 @@ def render_rankings_grid(scope, df, pos_value, title, sub_overall, sub_pos):
     defs = []
     for c in rn.columns:
         dcol = {"field": c, "headerName": c, "sortable": True, "resizable": True, "flex": 1, "minWidth": 100}
-        if c == "Player": dcol.update({"pinned": "left", "width": 200, "minWidth": 200, "flex": 0, "cellStyle": {"fontWeight": "700", "color": TEXT}})
+        if c == "Player":
+            dcol.update({"pinned": "left", "width": 200, "minWidth": 200, "flex": 0, "cellStyle": {"fontWeight": "700", "color": TEXT}})
+            if scope == "liverankings26":   # names open the stats popup
+                dcol["cellStyle"] = {"fontWeight": "700", "color": ACCENT, "cursor": "pointer", "textDecoration": "underline"}
         if c == "Rank": dcol.update({"width": 70, "minWidth": 70, "flex": 0, "cellStyle": {"color": TFAINT, "fontFamily": FONT_MONO}})
         if c == "Position": dcol.update({"width": 90, "minWidth": 90, "flex": 0, "cellStyle": pos_style_js()})
         if c == "Consensus Pos Rank": dcol.update({"cellStyle": pos_rank_style_js()})
@@ -745,7 +749,8 @@ def render_rankings_grid(scope, df, pos_value, title, sub_overall, sub_pos):
     return html.Div([
         pos_toggle_row(scope, pos_value),
         sec(f"{title} · {label}", sub=sub),
-        make_grid(f"g-{scope}", rn.fillna("—").to_dict("records"), defs, 600),
+        make_grid({"type": "live-grid", "index": 0} if scope == "liverankings26" else f"g-{scope}",
+                  rn.fillna("—").to_dict("records"), defs, 600),
     ])
 
 # ── TRADE ANALYZER ────────────────────────────────────────────────────────────
@@ -1496,15 +1501,114 @@ def _render_player_profile(r, df, pos, season_str):
         if adv else html.Div("No advanced data available for this player.", style={"color": TFAINT, "fontSize": "12px"}),
     ])
 
+# ── LIVE RANKINGS · PLAYER STATS POPUP ───────────────────────────────────────
+# Season stats per player (per-game averages) pulled from Flock Fantasy into
+# data/2026/live_player_stats.csv. Colors = percentile vs. same-position players
+# who have played, on a red → yellow → green gradient.
+LIVE_STAT_GROUPS = [
+    ("GENERAL", None, [("fpts", "FPTS/G", "{:.2f}", False), ("played", "Played", "{:.0f}", False),
+                       ("snap_pct", "Snap %", "{:.1f}%", False), ("pos_finish", "Pos Finish", "{:.0f}", True),
+                       ("ovr_finish", "Ovr Finish", "{:.0f}", True)]),
+    ("PASSING", "pass", [("pass_tds", "Pass TD/G", "{:.2f}", False), ("pass_yds", "Pass Yds/G", "{:.1f}", False)]),
+    ("RUSHING", "rush", [("rush_att", "Rush Att/G", "{:.2f}", False), ("rush_tds", "Rush TD/G", "{:.2f}", False),
+                         ("rush_yds", "Rush Yds/G", "{:.1f}", False), ("opportunities", "Opportunities/G", "{:.2f}", False)]),
+    ("RECEIVING", "rec", [("targets", "Targets/G", "{:.2f}", False), ("rec_yds", "Rec Yds/G", "{:.1f}", False),
+                          ("rec_tds", "Rec TD/G", "{:.2f}", False), ("yds_per_target", "Yds/Target", "{:.1f}", False),
+                          ("rz_targets", "RZ Targets/G", "{:.2f}", False), ("target_share", "Target %", "{:.1f}%", False)]),
+]
+LIVE_CORE_GROUPS = {"QB": {"pass", "rush"}, "RB": {"rush", "rec"}, "WR": {"rec"}, "TE": {"rec"}}
+
+def _grad_color(pct):
+    """0 → red, 0.5 → yellow, 1 → green."""
+    pct = max(0.0, min(1.0, pct))
+    red, yel, grn = (224, 91, 91), (240, 196, 76), (52, 211, 153)
+    a, b, t = (red, yel, pct / 0.5) if pct < 0.5 else (yel, grn, (pct - 0.5) / 0.5)
+    return "rgb({},{},{})".format(*[round(x + (y - x) * t) for x, y in zip(a, b)])
+
+def _num(v):
+    try:
+        f = float(v)
+        return None if pd.isna(f) else f
+    except (TypeError, ValueError):
+        return None
+
+def _live_stat_tile(label, text, color=None):
+    c = color or TEXT
+    return html.Div([
+        html.Div(text, style={"fontFamily": FONT_MONO, "fontWeight": "800", "fontSize": "17px", "color": c}),
+        html.Div(label, style={"fontSize": "10.5px", "color": TFAINT, "fontWeight": "700", "letterSpacing": ".05em",
+                               "textTransform": "uppercase", "marginTop": "4px"}),
+    ], style={"background": (color + "14") if color and color.startswith("#") else SURF2,
+              "border": f"1px solid {BORDER}", "borderLeft": f"3px solid {c}", "borderRadius": "8px",
+              "padding": "10px 12px", "minWidth": "112px"})
+
+def render_live_player_popup(player_name):
+    if flock_live.empty: return None
+    lr = flock_live[flock_live["player"] == player_name]
+    if lr.empty: return None
+    lr = lr.iloc[0]
+    pos = str(lr["position"]); pc = POS_C.get(pos, TEXT)
+    st = live_stats[live_stats["player"] == player_name] if not live_stats.empty else pd.DataFrame()
+    header = html.Div([
+        html.Div([
+            html.Span(player_name, style={"fontSize": "1.4rem", "fontWeight": "800", "color": TEXT, "marginRight": "10px"}),
+            html.Span(lr["consensus_pos_rank"], style={"background": pc + "22", "border": f"1px solid {pc}55", "color": pc,
+                      "fontSize": "11px", "fontWeight": "700", "padding": "3px 9px", "borderRadius": "5px"}),
+        ], style={"marginBottom": "4px"}),
+        html.Div(f"{lr.get('team', '—')} · #{int(lr['consensus_rank'])} in your Live Rankings · 2026 season, per-game averages",
+                 style={"color": TDIM, "fontSize": "12.5px", "marginBottom": "18px"}),
+    ])
+    if st.empty:
+        return html.Div([header, html.Div("No 2026 stats yet for this player.", style={"color": TFAINT, "fontSize": "12.5px"})])
+    row = st.iloc[0]
+    # comparison pool: same position, has played
+    pool_names = set(flock_live[flock_live["position"] == pos]["player"])
+    pool = live_stats[live_stats["player"].isin(pool_names)].copy()
+    pool = pool[pd.to_numeric(pool["played"], errors="coerce").fillna(0) > 0]
+    core = LIVE_CORE_GROUPS.get(pos, set())
+    sections = []
+    for title, gkey, stats in LIVE_STAT_GROUPS:
+        tiles = []
+        for key, label, fmt, lower_better in stats:
+            raw = row.get(key)
+            v = _num(raw)
+            if v is None:
+                if str(raw).strip().upper() == "INJ":
+                    tiles.append(_live_stat_tile(label, "INJ", TFAINT))
+                continue
+            if gkey and gkey not in core and v == 0:
+                continue                      # e.g. no passing stats for a RB
+            series = pd.to_numeric(pool.get(key), errors="coerce").dropna() if key in pool else pd.Series(dtype=float)
+            color = None
+            if len(series) >= 5:
+                pct = ((series > v).sum() + 0.5 * (series == v).sum()) / len(series) if lower_better \
+                      else ((series < v).sum() + 0.5 * (series == v).sum()) / len(series)
+                color = _grad_color(pct)
+            tiles.append(_live_stat_tile(label, fmt.format(v), color))
+        if tiles:
+            sections.append(html.Div([
+                html.Div(title, style={"fontSize": "11px", "fontWeight": "700", "color": TFAINT if title == "GENERAL" else ACCENT,
+                                       "letterSpacing": ".06em", "marginBottom": "10px"}),
+                html.Div(tiles, style={"display": "flex", "flexWrap": "wrap", "gap": "10px", "marginBottom": "20px"}),
+            ]))
+    legend = html.Div([
+        html.Span("Color vs. other " + pos + "s: ", style={"color": TFAINT}),
+        html.Span("worse", style={"color": _grad_color(0)}), html.Span(" → ", style={"color": TFAINT}),
+        html.Span("average", style={"color": _grad_color(.5)}), html.Span(" → ", style={"color": TFAINT}),
+        html.Span("better", style={"color": _grad_color(1)}),
+    ], style={"fontSize": "11.5px", "fontWeight": "600"})
+    return html.Div([header, *sections, legend])
+
 @app.callback(
     Output("player-modal-overlay", "style"),
     Output("player-modal-body", "children"),
     Input({"type": "hist-grid", "pos": ALL}, "cellClicked"),
+    Input({"type": "live-grid", "index": ALL}, "cellClicked"),
     Input("modal-close-btn", "n_clicks"),
     State("season", "value"),
     prevent_initial_call=True,
 )
-def toggle_player_modal(grid_clicks, close_click, season_str):
+def toggle_player_modal(grid_clicks, live_clicks, close_click, season_str):
     hidden = {"display": "none"}
     visible = {"position": "fixed", "top": 0, "left": 0, "right": 0, "bottom": 0,
                "background": "rgba(0,0,0,0.6)", "zIndex": 1000, "display": "flex",
@@ -1513,10 +1617,14 @@ def toggle_player_modal(grid_clicks, close_click, season_str):
     if trig is None or trig == "modal-close-btn" or not isinstance(trig, dict):
         return hidden, []
 
-    pos = trig.get("pos")
     cell = ctx.triggered[0]["value"] if ctx.triggered else None
     if not cell or cell.get("colId") != "Player":
         return hidden, []
+    if trig.get("type") == "live-grid":
+        body = render_live_player_popup(cell.get("value"))
+        return (visible, body) if body is not None else (hidden, [])
+
+    pos = trig.get("pos")
 
     player_name = cell.get("value")
     if not player_name or season_str == "2026":
