@@ -1189,13 +1189,7 @@ def render_2026(tab, rankings26_pos, liverankings26_pos):
 
     if tab == "sos26":
         if sos_2026.empty: return empty_msg()
-        return html.Div([
-            sec("2026 Strength of Schedule"),
-            ctrl("Position", dcc.Dropdown(id="sos26-pos",
-                options=[{"label": p, "value": p} for p in ["QB", "RB", "WR", "TE"]], value="RB",
-                clearable=False, style=dd_style())),
-            html.Div(id="sos26-c", style={"marginTop": "14px"}),
-        ])
+        return render_sos26()
 
     if tab == "draft":
         return html.Div([
@@ -1638,17 +1632,30 @@ def toggle_player_modal(grid_clicks, live_clicks, close_click, season_str):
     return visible, _render_player_profile(row.iloc[0], df, pos, season_str)
 
 # ── SOS 2026 ──────────────────────────────────────────────────────────────────
-@app.callback(Output("sos26-c", "children"), Input("sos26-pos", "value"))
-def render_sos26(pos):
-    if sos_2026.empty: return empty_msg()
-    df = sos_2026[sos_2026["position"] == pos].sort_values("sos_2026_rank").copy()
-    rn = {"team": "Team", "avg_opp_pts_allowed": "Avg PPR Pts Allowed", "sos_2026_rank": "SOS Rank", "difficulty": "Difficulty"}
-    cols = [c for c in rn if c in df.columns]
-    records = df[cols].rename(columns=rn).to_dict("records")
-    defs = [{"field": c, "headerName": c, "sortable": True, "resizable": True, "flex": 1, "minWidth": 120,
-             **({"pinned": "left", "width": 90, "minWidth": 90, "flex": 0, "cellStyle": {"fontWeight": "700", "fontFamily": FONT_MONO}} if c == "Team" else {})}
-            for c in list(rn.values()) if c in (records[0] if records else {})]
-    return make_grid("s26-a", records, defs, 600)
+def render_sos26():
+    """Team strength-of-schedule ranks by position (FullTime Fantasy / FFToolbox, remaining games).
+    1 = easiest schedule for that position, 32 = hardest."""
+    cols = [c for c in ["QB", "RB", "WR", "TE", "K", "DEF"] if c in sos_2026.columns]
+    records = sos_2026[["team"] + cols].rename(columns={"team": "Team"}).to_dict("records")
+    defs = [{"field": "Team", "headerName": "Team", "pinned": "left", "width": 100, "minWidth": 100, "flex": 0,
+             "sortable": True, "cellStyle": {"fontWeight": "700", "fontFamily": FONT_MONO, "color": TEXT}}]
+    for c in cols:
+        d = {"field": c, "headerName": c, "sortable": True, "resizable": True, "flex": 1, "minWidth": 90,
+             "type": "numericColumn", "cellStyle": heat_style_avg(16.5, 15.5, invert=True)}
+        if c == "WR": d["sort"] = "asc"
+        defs.append(d)
+    legend = html.Div([
+        html.Span("1 · Easiest", style={"color": GREEN, "fontWeight": "700"}),
+        html.Span(" → ", style={"color": TFAINT}),
+        html.Span("Hardest · 32", style={"color": RED, "fontWeight": "700"}),
+    ], style={"fontSize": "12px", "marginBottom": "12px"})
+    return html.Div([
+        sec("2026 Strength of Schedule",
+            sub="Team schedule rank by position for the remaining games · #1 = opponents allow the most fantasy points "
+                "to that position (easiest) · #32 = hardest · click a column to sort."),
+        legend,
+        make_grid("s26-a", records, defs, 1132),
+    ])
 
 # ── SOS HISTORICAL ────────────────────────────────────────────────────────────
 @app.callback(Output("sos-h-c", "children"), Input("sos-h-pos", "value"), Input("season", "value"))
