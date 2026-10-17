@@ -7,15 +7,15 @@ team_id,team_name,owner,record,points_for,points_against,player,position,lineup_
 1,Club Going Up On Odunze,Dylan Lee,3-2,676.86,615.62,Will Reichard,K,Bench
 1,Club Going Up On Odunze,Dylan Lee,3-2,676.86,615.62,Tee Higgins,WR,Bench
 1,Club Going Up On Odunze,Dylan Lee,3-2,676.86,615.62,Javonte Williams,RB,RB
-1,Club Going Up On Odunze,Dylan Lee,3-2,676.86,615.62,Jordan Mason,RB,Bench
 1,Club Going Up On Odunze,Dylan Lee,3-2,676.86,615.62,Jordan Love,QB,QB
 1,Club Going Up On Odunze,Dylan Lee,3-2,676.86,615.62,49ers D/ST,DST,D/ST
 1,Club Going Up On Odunze,Dylan Lee,3-2,676.86,615.62,Matt Gay,K,K
 1,Club Going Up On Odunze,Dylan Lee,3-2,676.86,615.62,Rachaad White,RB,Bench
-1,Club Going Up On Odunze,Dylan Lee,3-2,676.86,615.62,Harold Fannin Jr.,TE,TE
+1,Club Going Up On Odunze,Dylan Lee,3-2,676.86,615.62,Harold Fannin Jr.,TE,Bench
 1,Club Going Up On Odunze,Dylan Lee,3-2,676.86,615.62,Joe Burrow,QB,Bench
 1,Club Going Up On Odunze,Dylan Lee,3-2,676.86,615.62,Bhayshul Tuten,RB,RB
 1,Club Going Up On Odunze,Dylan Lee,3-2,676.86,615.62,Deebo Samuel Sr.,WR,IR
+1,Club Going Up On Odunze,Dylan Lee,3-2,676.86,615.62,Travis Kelce,TE,TE
 2,OSU Fan Club,Logan Tincher,5-0,644.02,563.84,Jaxon Smith-Njigba,WR,WR
 2,OSU Fan Club,Logan Tincher,5-0,644.02,563.84,Chris Olave,WR,WR
 2,OSU Fan Club,Logan Tincher,5-0,644.02,563.84,Josh Allen,QB,QB
@@ -33,7 +33,7 @@ team_id,team_name,owner,record,points_for,points_against,player,position,lineup_
 2,OSU Fan Club,Logan Tincher,5-0,644.02,563.84,Isaac TeSlaa,WR,Bench
 2,OSU Fan Club,Logan Tincher,5-0,644.02,563.84,Baker Mayfield,QB,Bench
 3,Better Call Hall,Beam griffith,2-3,577.84,645.76,Ja'Marr Chase,WR,Bench
-3,Better Call Hall,Beam griffith,2-3,577.84,645.76,Jeremiyah Love,RB,RB
+3,Better Call Hall,Beam griffith,2-3,577.84,645.76,Jeremiyah Love,RB,Bench
 3,Better Call Hall,Beam griffith,2-3,577.84,645.76,Breece Hall,RB,Bench
 3,Better Call Hall,Beam griffith,2-3,577.84,645.76,Terry McLaurin,WR,WR
 3,Better Call Hall,Beam griffith,2-3,577.84,645.76,Kyle Pitts Sr.,TE,Bench
@@ -46,7 +46,7 @@ team_id,team_name,owner,record,points_for,points_against,player,position,lineup_
 3,Better Call Hall,Beam griffith,2-3,577.84,645.76,Ollie Gordon II,RB,Bench
 3,Better Call Hall,Beam griffith,2-3,577.84,645.76,Courtland Sutton,WR,Bench
 3,Better Call Hall,Beam griffith,2-3,577.84,645.76,Saquon Barkley,RB,Bench
-3,Better Call Hall,Beam griffith,2-3,577.84,645.76,Tyler Allgeier,RB,Bench
+3,Better Call Hall,Beam griffith,2-3,577.84,645.76,Tyler Allgeier,RB,RB
 3,Better Call Hall,Beam griffith,2-3,577.84,645.76,Browns D/ST,DST,D/ST
 3,Better Call Hall,Beam griffith,2-3,577.84,645.76,Germie Bernard,WR,WR
 4,Watson Massage Parlor,Cole Owens,4-1,611.20,514.56,Amon-Ra St. Brown,WR,Bench
@@ -90,14 +90,16 @@ team_id,team_name,owner,record,points_for,points_against,player,position,lineup_
 6,We Getting Shough Tonight,Mitsu Navarro,2-3,614.38,641.10,Tyler Shough,QB,QB
 6,We Getting Shough Tonight,Mitsu Navarro,2-3,614.38,641.10,Steelers D/ST,DST,D/ST
 6,We Getting Shough Tonight,Mitsu Navarro,2-3,614.38,641.10,Kaelon Black,RB,Bench
-6,We Getting Shough Tonight,Mitsu Navarro,2-3,614.38,641.10,Adonai Mitchell,WR,Bench
+6,We Getting Shough Tonight,Mitsu Navarro,2-3,614.38,641.10,Adonai Mitchell,WR,IR
 6,We Getting Shough Tonight,Mitsu Navarro,2-3,614.38,641.10,Spencer Shrader,K,K
 6,We Getting Shough Tonight,Mitsu Navarro,2-3,614.38,641.10,Drake London,WR,WR
 6,We Getting Shough Tonight,Mitsu Navarro,2-3,614.38,641.10,Kyren Williams,RB,RB
 6,We Getting Shough Tonight,Mitsu Navarro,2-3,614.38,641.10,Antonio Williams,WR,Bench
 6,We Getting Shough Tonight,Mitsu Navarro,2-3,614.38,641.10,D'Andre Swift,RB,FLEX
-6,We Getting Shough Tonight,Mitsu Navarro,2-3,614.38,641.10,Brenton Strange,TE,TE
+6,We Getting Shough Tonight,Mitsu Navarro,2-3,614.38,641.10,Brenton Strange,TE,Bench
 6,We Getting Shough Tonight,Mitsu Navarro,2-3,614.38,641.10,Deshaun Watson,QB,Bench
+6,We Getting Shough Tonight,Mitsu Navarro,2-3,614.38,641.10,Austin Ekeler,RB,Bench
+6,We Getting Shough Tonight,Mitsu Navarro,2-3,614.38,641.10,Tyler Higbee,TE,TE
 7,Stop it Hurts,david sanchez,3-2,595.92,602.74,Bijan Robinson,RB,RB
 7,Stop it Hurts,david sanchez,3-2,595.92,602.74,George Pickens,WR,WR
 7,Stop it Hurts,david sanchez,3-2,595.92,602.74,Mike Evans,WR,WR
@@ -113,8 +115,8 @@ team_id,team_name,owner,record,points_for,points_against,player,position,lineup_
 7,Stop it Hurts,david sanchez,3-2,595.92,602.74,Jalen Hurts,QB,Bench
 7,Stop it Hurts,david sanchez,3-2,595.92,602.74,Dontayvion Wicks,WR,Bench
 7,Stop it Hurts,david sanchez,3-2,595.92,602.74,James Cook III,RB,RB
-7,Stop it Hurts,david sanchez,3-2,595.92,602.74,Kendrick Bourne,WR,Bench
 7,Stop it Hurts,david sanchez,3-2,595.92,602.74,Kirk Cousins,QB,QB
+7,Stop it Hurts,david sanchez,3-2,595.92,602.74,Christian Kirk,WR,Bench
 8,No Pitty for the Griddy,Anuj Gandhi,2-3,524.44,569.66,Justin Jefferson,WR,Bench
 8,No Pitty for the Griddy,Anuj Gandhi,2-3,524.44,569.66,Cam Skattebo,RB,RB
 8,No Pitty for the Griddy,Anuj Gandhi,2-3,524.44,569.66,Rico Dowdle,RB,Bench
@@ -123,18 +125,18 @@ team_id,team_name,owner,record,points_for,points_against,player,position,lineup_
 8,No Pitty for the Griddy,Anuj Gandhi,2-3,524.44,569.66,Broncos D/ST,DST,D/ST
 8,No Pitty for the Griddy,Anuj Gandhi,2-3,524.44,569.66,Rashid Shaheed,WR,Bench
 8,No Pitty for the Griddy,Anuj Gandhi,2-3,524.44,569.66,Hunter Henry,TE,Bench
-8,No Pitty for the Griddy,Anuj Gandhi,2-3,524.44,569.66,Kyle Williams,WR,WR
+8,No Pitty for the Griddy,Anuj Gandhi,2-3,524.44,569.66,Kyle Williams,WR,Bench
 8,No Pitty for the Griddy,Anuj Gandhi,2-3,524.44,569.66,Andy Borregales,K,K
-8,No Pitty for the Griddy,Anuj Gandhi,2-3,524.44,569.66,Travis Kelce,TE,TE
 8,No Pitty for the Griddy,Anuj Gandhi,2-3,524.44,569.66,Drake Maye,QB,QB
 8,No Pitty for the Griddy,Anuj Gandhi,2-3,524.44,569.66,Tre Tucker,WR,Bench
 8,No Pitty for the Griddy,Anuj Gandhi,2-3,524.44,569.66,Rhamondre Stevenson,RB,RB
 8,No Pitty for the Griddy,Anuj Gandhi,2-3,524.44,569.66,Davante Adams,WR,WR
-8,No Pitty for the Griddy,Anuj Gandhi,2-3,524.44,569.66,A.J. Brown,WR,Bench
+8,No Pitty for the Griddy,Anuj Gandhi,2-3,524.44,569.66,A.J. Brown,WR,WR
+8,No Pitty for the Griddy,Anuj Gandhi,2-3,524.44,569.66,Jordan Mason,RB,Bench
 9,The Two Bowers,Gabriel .,3-2,649.20,559.38,Puka Nacua,WR,WR
 9,The Two Bowers,Gabriel .,3-2,649.20,559.38,Brock Bowers,TE,TE
 9,The Two Bowers,Gabriel .,3-2,649.20,559.38,Garrett Wilson,WR,WR
-9,The Two Bowers,Gabriel .,3-2,649.20,559.38,Lamar Jackson,QB,QB
+9,The Two Bowers,Gabriel .,3-2,649.20,559.38,Lamar Jackson,QB,Bench
 9,The Two Bowers,Gabriel .,3-2,649.20,559.38,Jadarian Price,RB,IR
 9,The Two Bowers,Gabriel .,3-2,649.20,559.38,Jaylen Warren,RB,RB
 9,The Two Bowers,Gabriel .,3-2,649.20,559.38,Michael Pittman Jr.,WR,Bench
@@ -142,22 +144,22 @@ team_id,team_name,owner,record,points_for,points_against,player,position,lineup_
 9,The Two Bowers,Gabriel .,3-2,649.20,559.38,Matthew Golden,WR,FLEX
 9,The Two Bowers,Gabriel .,3-2,649.20,559.38,Jordan Addison,WR,Bench
 9,The Two Bowers,Gabriel .,3-2,649.20,559.38,Dalton Kincaid,TE,Bench
-9,The Two Bowers,Gabriel .,3-2,649.20,559.38,Tyjae Spears,RB,Bench
 9,The Two Bowers,Gabriel .,3-2,649.20,559.38,Bo Nix,QB,Bench
 9,The Two Bowers,Gabriel .,3-2,649.20,559.38,Alvin Kamara,RB,Bench
 9,The Two Bowers,Gabriel .,3-2,649.20,559.38,Jake Bates,K,Bench
 9,The Two Bowers,Gabriel .,3-2,649.20,559.38,Chiefs D/ST,DST,D/ST
 9,The Two Bowers,Gabriel .,3-2,649.20,559.38,Dominic Zvada,K,K
+9,The Two Bowers,Gabriel .,3-2,649.20,559.38,Jameis Winston,QB,QB
 10,Osama Bin Hampton,Micah Allen,1-4,534.84,580.88,Chase Brown,RB,Bench
 10,Osama Bin Hampton,Micah Allen,1-4,534.84,580.88,Omarion Hampton,RB,Bench
-10,Osama Bin Hampton,Micah Allen,1-4,534.84,580.88,DeVonta Smith,WR,Bench
+10,Osama Bin Hampton,Micah Allen,1-4,534.84,580.88,DeVonta Smith,WR,WR
 10,Osama Bin Hampton,Micah Allen,1-4,534.84,580.88,Ladd McConkey,WR,Bench
 10,Osama Bin Hampton,Micah Allen,1-4,534.84,580.88,Parker Washington,WR,WR
 10,Osama Bin Hampton,Micah Allen,1-4,534.84,580.88,Kyle Monangai,RB,Bench
 10,Osama Bin Hampton,Micah Allen,1-4,534.84,580.88,Josh Downs,WR,FLEX
 10,Osama Bin Hampton,Micah Allen,1-4,534.84,580.88,Zach Charbonnet,RB,IR
 10,Osama Bin Hampton,Micah Allen,1-4,534.84,580.88,Ka'imi Fairbairn,K,K
-10,Osama Bin Hampton,Micah Allen,1-4,534.84,580.88,Devaughn Vele,WR,WR
+10,Osama Bin Hampton,Micah Allen,1-4,534.84,580.88,Devaughn Vele,WR,Bench
 10,Osama Bin Hampton,Micah Allen,1-4,534.84,580.88,Keaton Mitchell,RB,Bench
 10,Osama Bin Hampton,Micah Allen,1-4,534.84,580.88,Makai Lemon,WR,Bench
 10,Osama Bin Hampton,Micah Allen,1-4,534.84,580.88,Braelon Allen,RB,RB
@@ -169,32 +171,32 @@ team_id,team_name,owner,record,points_for,points_against,player,position,lineup_
 11,My Ball Zach Ertz,Aiden Raboy,3-2,674.00,600.36,Kenneth Walker III,RB,RB
 11,My Ball Zach Ertz,Aiden Raboy,3-2,674.00,600.36,Trey McBride,TE,TE
 11,My Ball Zach Ertz,Aiden Raboy,3-2,674.00,600.36,Jaylen Waddle,WR,Bench
-11,My Ball Zach Ertz,Aiden Raboy,3-2,674.00,600.36,Marvin Harrison Jr.,WR,WR
+11,My Ball Zach Ertz,Aiden Raboy,3-2,674.00,600.36,Marvin Harrison Jr.,WR,Bench
 11,My Ball Zach Ertz,Aiden Raboy,3-2,674.00,600.36,Matthew Stafford,QB,QB
 11,My Ball Zach Ertz,Aiden Raboy,3-2,674.00,600.36,Rams D/ST,DST,D/ST
 11,My Ball Zach Ertz,Aiden Raboy,3-2,674.00,600.36,Jason Myers,K,K
-11,My Ball Zach Ertz,Aiden Raboy,3-2,674.00,600.36,Xavier Worthy,WR,Bench
+11,My Ball Zach Ertz,Aiden Raboy,3-2,674.00,600.36,Xavier Worthy,WR,WR
 11,My Ball Zach Ertz,Aiden Raboy,3-2,674.00,600.36,Khalil Shakir,WR,Bench
 11,My Ball Zach Ertz,Aiden Raboy,3-2,674.00,600.36,Jonah Coleman,RB,IR
 11,My Ball Zach Ertz,Aiden Raboy,3-2,674.00,600.36,Denzel Boston,WR,FLEX
-11,My Ball Zach Ertz,Aiden Raboy,3-2,674.00,600.36,Raiders D/ST,DST,Bench
 11,My Ball Zach Ertz,Aiden Raboy,3-2,674.00,600.36,Kendre Miller,RB,RB
 11,My Ball Zach Ertz,Aiden Raboy,3-2,674.00,600.36,Josh Jacobs,RB,Bench
 11,My Ball Zach Ertz,Aiden Raboy,3-2,674.00,600.36,Emeka Egbuka,WR,Bench
 11,My Ball Zach Ertz,Aiden Raboy,3-2,674.00,600.36,DK Metcalf,WR,WR
+11,My Ball Zach Ertz,Aiden Raboy,3-2,674.00,600.36,Darius Cooper,WR,Bench
 12,30 Dak Attack,Andy Valle,2-3,584.44,577.34,CeeDee Lamb,WR,WR
 12,30 Dak Attack,Andy Valle,2-3,584.44,577.34,Bucky Irving,RB,RB
 12,30 Dak Attack,Andy Valle,2-3,584.44,577.34,David Montgomery,RB,Bench
 12,30 Dak Attack,Andy Valle,2-3,584.44,577.34,Dak Prescott,QB,QB
 12,30 Dak Attack,Andy Valle,2-3,584.44,577.34,Sam LaPorta,TE,Bench
-12,30 Dak Attack,Andy Valle,2-3,584.44,577.34,Wan'Dale Robinson,WR,WR
+12,30 Dak Attack,Andy Valle,2-3,584.44,577.34,Wan'Dale Robinson,WR,FLEX
 12,30 Dak Attack,Andy Valle,2-3,584.44,577.34,Quentin Johnston,WR,Bench
-12,30 Dak Attack,Andy Valle,2-3,584.44,577.34,Jake Ferguson,TE,TE
+12,30 Dak Attack,Andy Valle,2-3,584.44,577.34,Jake Ferguson,TE,Bench
 12,30 Dak Attack,Andy Valle,2-3,584.44,577.34,Woody Marks,RB,RB
 12,30 Dak Attack,Andy Valle,2-3,584.44,577.34,Jared Goff,QB,Bench
-12,30 Dak Attack,Andy Valle,2-3,584.44,577.34,Ryan Flournoy,WR,Bench
 12,30 Dak Attack,Andy Valle,2-3,584.44,577.34,Chase McLaughlin,K,K
-12,30 Dak Attack,Andy Valle,2-3,584.44,577.34,Bills D/ST,DST,D/ST
 12,30 Dak Attack,Andy Valle,2-3,584.44,577.34,Aaron Jones Sr.,RB,Bench
-12,30 Dak Attack,Andy Valle,2-3,584.44,577.34,Rashee Rice,WR,FLEX
-12,30 Dak Attack,Andy Valle,2-3,584.44,577.34,Tetairoa McMillan,WR,Bench
+12,30 Dak Attack,Andy Valle,2-3,584.44,577.34,Rashee Rice,WR,Bench
+12,30 Dak Attack,Andy Valle,2-3,584.44,577.34,Tetairoa McMillan,WR,WR
+12,30 Dak Attack,Andy Valle,2-3,584.44,577.34,Buccaneers D/ST,DST,D/ST
+12,30 Dak Attack,Andy Valle,2-3,584.44,577.34,Michael Mayer,TE,TE
