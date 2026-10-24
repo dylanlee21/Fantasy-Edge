@@ -416,6 +416,7 @@ def load_2026():
 
 master, sos_2026, flock_live = load_2026()
 league_rosters = _read(os.path.join(DATA_DIR, "2026", "league_rosters.csv"))
+sleeper_rosters = _read(os.path.join(DATA_DIR, "2026", "sleeper_rosters.csv"))
 live_stats = _read(os.path.join(DATA_DIR, "2026", "live_player_stats.csv"))
 data_2025 = load_year(2025)
 data_2024 = load_year(2024)
@@ -612,8 +613,8 @@ app.layout = html.Div([
                 dcc.Tab(label="Trade Analyzer", value="trade26", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="Draft Sim", value="draftsim26", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="SOS", value="sos26", style=_ts(), selected_style=_tsa()),
-                dcc.Tab(label="Play Callers", value="playcallers", style=_ts(), selected_style=_tsa()),
-                dcc.Tab(label="League Rosters", value="rosters26", style=_ts(), selected_style=_tsa()),
+                dcc.Tab(label="Sleeper League", value="sleeper26", style=_ts(), selected_style=_tsa()),
+                dcc.Tab(label="ESPN League", value="rosters26", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="Draft Notes", value="draft", style=_ts(), selected_style=_tsa()),
                 dcc.Tab(label="Coaching", value="coaching", style=_ts(), selected_style=_tsa()),
             ], colors={"border": BORDER, "primary": ACCENT, "background": "transparent"},
@@ -996,8 +997,14 @@ def update_trade(add_a, add_b, _reset, _rm, _bal, store):
 #  · Team value = best legal starting lineup (1QB/2RB/2WR/1TE/1FLEX) at full value
 #                 + bench depth at a steep discount (bench can't score for you).
 #  · Room rank   = each position group's weighted value (starters count most), ranked 1–12.
-MY_OWNER = "Dylan Lee"
-ROSTER_BENCH_W = [0.35, 0.25, 0.18, 0.12, 0.08, 0.05]
+MY_OWNER = "Dylan Lee"                 # ESPN (ASU 26)
+MY_OWNERS = {"Dylan Lee", "dylannn21"}  # ESPN + Sleeper handles
+# Per-league lineup settings. ESPN ASU 26: 12 teams, 1 FLEX, 7 bench.
+# Sleeper The League '26: 10 teams, 2 FLEX, 5 bench (full PPR).
+LEAGUE_CFG = {
+    "espn":    {"flex": 1, "bench_w": [0.35, 0.25, 0.18, 0.12, 0.08, 0.05, 0.03]},
+    "sleeper": {"flex": 2, "bench_w": [0.35, 0.25, 0.18, 0.12, 0.08]},
+}
 ROOM_W = {"QB": [1, .15], "RB": [1, 1, .5, .25, .1], "WR": [1, 1, .6, .3, .15, .05], "TE": [1, .15]}
 ROOM_TIERS = {"QB": (6, 12), "RB": (12, 24), "WR": (12, 30), "TE": (6, 12)}   # (green ≤, yellow ≤)
 ROSTER_SLOT_TAG = {"IR": "IR"}
@@ -1023,12 +1030,14 @@ def _match_live(name, idx):
     with_team = [h for h in hits if str(h.get("team", "-")) not in ("-", "", "nan")]
     return sorted(with_team or hits, key=lambda h: int(h["consensus_rank"]))[0]
 
-def build_league_model():
-    if league_rosters.empty or flock_live.empty: return [], []
+def build_league_model(rosters=None, league="espn"):
+    rosters = league_rosters if rosters is None else rosters
+    cfg = LEAGUE_CFG[league]
+    if rosters.empty or flock_live.empty: return [], []
     idx = _live_name_index()
     teams = {}
     rostered = set()
-    for r in league_rosters.to_dict("records"):
+    for r in rosters.to_dict("records"):
         t = teams.setdefault(int(r["team_id"]), {
             "id": int(r["team_id"]), "name": r["team_name"], "owner": r["owner"], "record": r["record"],
             "pf": float(r["points_for"]), "pa": float(r["points_against"]), "players": []})
@@ -1050,11 +1059,11 @@ def build_league_model():
                 if n == 0: break
                 if id(p) in used or p["pos"] not in pos_set: continue
                 used.add(id(p)); starters.append(p); n -= 1
-        take({"QB"}, 1); take({"RB"}, 2); take({"WR"}, 2); take({"TE"}, 1); take({"RB", "WR", "TE"}, 1)
+        take({"QB"}, 1); take({"RB"}, 2); take({"WR"}, 2); take({"TE"}, 1); take({"RB", "WR", "TE"}, cfg["flex"])
         bench = [p for p in ps if id(p) not in used]
         contrib = {"QB": 0.0, "RB": 0.0, "WR": 0.0, "TE": 0.0}
         for p in starters: contrib[p["pos"]] += p["value"]
-        for w, p in zip(ROSTER_BENCH_W, bench): contrib[p["pos"]] += p["value"] * w
+        for w, p in zip(cfg["bench_w"], bench): contrib[p["pos"]] += p["value"] * w
         t["contrib"] = contrib
         t["value"] = sum(contrib.values())
         t["room_score"] = {}
@@ -1072,8 +1081,8 @@ def build_league_model():
     return tl, waivers
 
 def _rank_color(n, total=12):
-    if n <= 3: return GREEN
-    if n <= 8: return ACCENT2
+    if n <= max(1, round(total * 0.25)): return GREEN
+    if n <= round(total * 0.67): return ACCENT2
     return RED
 
 def _tier_badge(pos, num, text):
@@ -1089,8 +1098,8 @@ def _roster_player_row(p):
         _tier_badge(p["pos"], p["pos_num"], p["pos_rank"]),
     ], className="ros-prow")
 
-def _roster_team_row(i, t, max_value):
-    mine = t["owner"] == MY_OWNER
+def _roster_team_row(i, t, max_value, n_teams=12):
+    mine = t["owner"] in MY_OWNERS
     width = t["value"] / max_value * 100 if max_value else 0
     segs = []
     for pos in ("QB", "RB", "WR", "TE"):
@@ -1100,7 +1109,7 @@ def _roster_team_row(i, t, max_value):
     stat = lambda k, v: html.Span([html.Span(k, style={"color": TFAINT, "marginRight": "5px"}), v], className="ros-stat")
     summary = html.Summary([
         html.Div([
-            html.Div(str(i), className="ros-rank", style={"color": _rank_color(i)}),
+            html.Div(str(i), className="ros-rank", style={"color": _rank_color(i, n_teams)}),
             html.Div([
                 html.Div([
                     html.Span(t["name"], className="ros-tname"),
@@ -1121,15 +1130,16 @@ def _roster_team_row(i, t, max_value):
         rr = t["room_rank"][pos]
         cols.append(html.Div([
             html.Div([html.Span(f"{label} ", style={"color": POS_C[pos]}),
-                      html.Span(f"#{rr}", style={"color": _rank_color(rr), "fontFamily": FONT_MONO})],
+                      html.Span(f"#{rr}", style={"color": _rank_color(rr, n_teams), "fontFamily": FONT_MONO})],
                      className="ros-colhead"),
             *[_roster_player_row(p) for p in t["rooms"][pos]],
         ], className="ros-col"))
     return html.Details([summary, html.Div(cols, className="ros-cols")],
                         className="ros-team" + (" mine" if mine else ""), open=False)
 
-def render_league_rosters():
-    teams, waivers = build_league_model()
+def render_league_rosters(league="espn"):
+    rosters = sleeper_rosters if league == "sleeper" else league_rosters
+    teams, waivers = build_league_model(rosters, league)
     if not teams: return empty_msg("No league rosters loaded yet.")
     max_v = max(t["value"] for t in teams)
     legend = html.Div([html.Span([html.Span(className="ros-dot", style={"background": POS_C[p]}), p],
@@ -1145,12 +1155,13 @@ def render_league_rosters():
     ], className="ros-col", style={"background": SURF, "border": f"1px solid {BORDER}", "borderRadius": "10px",
                                    "padding": "14px 16px"})
     return html.Div([
-        sec("ASU 26 · League Rosters",
-            sub="Rosters imported from ESPN · teams ranked 1–12 by your Live Rankings (best starting lineup + bench depth) · "
-                "bar segments = each position group's share of team value, numbers = room rank · click a team to open it."),
+        sec("The League '26 · Sleeper" if league == "sleeper" else "ASU 26 · ESPN League",
+            sub=(f"Rosters imported from {'Sleeper' if league == 'sleeper' else 'ESPN'} · teams ranked 1–{len(teams)} by your Live Rankings "
+                 f"(best starting lineup: 1QB/2RB/2WR/1TE/{LEAGUE_CFG[league]['flex']}FLEX + bench depth) · "
+                 "bar segments = each position group's share of team value, numbers = room rank · click a team to open it.")),
         legend,
         html.Div([
-            html.Div([_roster_team_row(i, t, max_v) for i, t in enumerate(teams, 1)], style={"flex": "1", "minWidth": "0"}),
+            html.Div([_roster_team_row(i, t, max_v, len(teams)) for i, t in enumerate(teams, 1)], style={"flex": "1", "minWidth": "0"}),
             html.Div(waiver_col, style={"width": "290px", "flexShrink": "0"}),
         ], style={"display": "flex", "gap": "16px", "alignItems": "flex-start", "flexWrap": "wrap"}),
     ])
@@ -1202,11 +1213,11 @@ def render_2026(tab, rankings26_pos, liverankings26_pos):
             html.Div(id="draft-c", children=_render_must()),
         ])
 
-    if tab == "playcallers":
-        return _render_playcallers()
+    if tab == "sleeper26":
+        return render_league_rosters("sleeper")
 
     if tab == "rosters26":
-        return render_league_rosters()
+        return render_league_rosters("espn")
 
     if tab == "coaching":
         return _render_coaching()
