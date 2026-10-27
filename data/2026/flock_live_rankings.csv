@@ -37,11 +37,11 @@ consensus_rank,player,position,team,consensus_pos_rank
 36,Garrett Wilson,WR,NYJ,WR17
 37,Breece Hall,RB,NYJ,RB17
 38,Chase Brown,RB,CIN,RB18
-39,George Pickens,WR,DAL,WR18
-40,Jalen Coker,WR,CAR,WR19
-41,Luther Burden,WR,CHI,WR20
-42,Jeremiyah Love,RB,ARI,RB19
-43,Rashee Rice,WR,KC,WR21
+39,Rashee Rice,WR,KC,WR18
+40,George Pickens,WR,DAL,WR19
+41,Jalen Coker,WR,CAR,WR20
+42,Luther Burden,WR,CHI,WR21
+43,Jeremiyah Love,RB,ARI,RB19
 44,George Kittle,TE,SF,TE3
 45,Saquon Barkley,RB,PHI,RB20
 46,Jameson Williams,WR,DET,WR22
@@ -62,8 +62,8 @@ consensus_rank,player,position,team,consensus_pos_rank
 61,Brock Purdy,QB,SF,QB3
 62,Mike Evans,WR,SF,WR30
 63,Lamar Jackson,QB,BAL,QB4
-64,Caleb Williams,QB,CHI,QB5
-65,Joe Burrow,QB,CIN,QB6
+64,Joe Burrow,QB,CIN,QB5
+65,Caleb Williams,QB,CHI,QB6
 66,DK Metcalf,WR,PIT,WR31
 67,Jaylen Waddle,WR,DEN,WR32
 68,Sam LaPorta,TE,DET,TE6
