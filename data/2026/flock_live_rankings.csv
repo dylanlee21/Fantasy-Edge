@@ -4,21 +4,21 @@ consensus_rank,player,position,team,consensus_pos_rank
 3,Jaxon Smith-Njigba,WR,SEA,WR1
 4,Bijan Robinson,RB,ATL,RB3
 5,Puka Nacua,WR,LAR,WR2
-6,Amon-Ra St. Brown,WR,DET,WR3
-7,CeeDee Lamb,WR,DAL,WR4
+6,CeeDee Lamb,WR,DAL,WR3
+7,Amon-Ra St. Brown,WR,DET,WR4
 8,Ja'Marr Chase,WR,CIN,WR5
 9,Christian McCaffrey,RB,SF,RB4
-10,Jonathan Taylor,RB,IND,RB5
-11,James Cook,RB,BUF,RB6
-12,Zay Flowers,WR,BAL,WR6
+10,Zay Flowers,WR,BAL,WR6
+11,Jonathan Taylor,RB,IND,RB5
+12,James Cook,RB,BUF,RB6
 13,Derrick Henry,RB,BAL,RB7
 14,Brock Bowers,TE,LV,TE1
 15,Malik Nabers,WR,NYG,WR7
-16,Kyren Williams,RB,LAR,RB8
-17,Ashton Jeanty,RB,LV,RB9
-18,Trey McBride,TE,ARI,TE2
-19,Chris Olave,WR,NO,WR8
-20,Drake London,WR,ATL,WR9
+16,Drake London,WR,ATL,WR8
+17,Kyren Williams,RB,LAR,RB8
+18,Ashton Jeanty,RB,LV,RB9
+19,Trey McBride,TE,ARI,TE2
+20,Chris Olave,WR,NO,WR9
 21,Javonte Williams,RB,DAL,RB10
 22,Christian Watson,WR,GB,WR10
 23,Justin Jefferson,WR,MIN,WR11
@@ -31,8 +31,8 @@ consensus_rank,player,position,team,consensus_pos_rank
 30,Bucky Irving,RB,TB,RB13
 31,Bhayshul Tuten,RB,JAX,RB14
 32,Tetairoa McMillan,WR,CAR,WR15
-33,Matthew Golden,WR,GB,WR16
-34,Josh Jacobs,RB,GB,RB15
+33,Josh Jacobs,RB,GB,RB15
+34,Matthew Golden,WR,GB,WR16
 35,Jaylen Warren,RB,PIT,RB16
 36,Garrett Wilson,WR,NYJ,WR17
 37,Breece Hall,RB,NYJ,RB17
